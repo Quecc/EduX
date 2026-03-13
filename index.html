@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduAI - Türkiye Müfredatına Uyumlu Yapay Zeka Öğrenme Asistanı</title>
+  <meta name="description" content="Türkiye eğitim müfredatına uyumlu yapay zeka destekli soru çözme ve kişiselleştirilmiş öğrenme asistanı. İlkokul, ortaokul, lise ve üniversite öğrencileri için." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="20" r="20" fill="url(#logoGrad)"/>
+            <path d="M12 20L18 26L28 14" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#6C63FF"/>
+                <stop offset="1" stop-color="#3ECFCF"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">Edu<span class="logo-ai">AI</span></span>
+      </div>
+      <div class="nav-links">
+        <a href="#hero" class="nav-link">Ana Sayfa</a>
+        <a href="#features" class="nav-link">Özellikler</a>
+        <a href="#how-it-works" class="nav-link">Nasıl Çalışır</a>
+        <a href="#assistant" class="nav-link nav-cta" id="startBtn">Asistanı Başlat</a>
+      </div>
+      <button class="hamburger" id="hamburger" aria-label="Menü">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <div class="hero-orb orb-1"></div>
+      <div class="hero-orb orb-2"></div>
+      <div class="hero-orb orb-3"></div>
+      <div class="grid-overlay"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        <span>Türkiye MEB Müfredatına Uyumlu</span>
+      </div>
+      <h1 class="hero-title">
+        Yapay Zeka ile<br/>
+        <span class="gradient-text">Akıllı Öğrenme</span><br/>
+        Deneyimi
+      </h1>
+      <p class="hero-subtitle">
+        Sorularını analiz et, eksik konularını bul, konuları öğren ve pratik yap. 
+        Kişiselleştirilmiş yapay zeka asistanınla her konuyu kolayca kavra.
+      </p>
+      <div class="hero-actions">
+        <a href="#assistant" class="btn-primary" id="heroStartBtn">
+          <span>Hemen Başla</span>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#how-it-works" class="btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" fill="currentColor"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/></svg>
+          <span>Nasıl Çalışır</span>
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-num">5+</span>
+          <span class="stat-label">Ders</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">100+</span>
+          <span class="stat-label">Konu</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">MEB</span>
+          <span class="stat-label">Uyumlu</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="floating-card card-1">
+        <div class="card-icon">📐</div>
+        <div class="card-text">
+          <strong>Matematik</strong>
+          <span>Mutlak Değer</span>
+        </div>
+        <div class="card-check">✓</div>
+      </div>
+      <div class="floating-card card-2">
+        <div class="card-icon">🧠</div>
+        <div class="card-text">
+          <strong>Eksik Konu Tespiti</strong>
+          <span>3 konu bulundu</span>
+        </div>
+      </div>
+      <div class="floating-card card-3">
+        <div class="card-icon">⚡</div>
+        <div class="card-text">
+          <strong>Anlık Çözüm</strong>
+          <span>Adım adım</span>
+        </div>
+      </div>
+      <div class="hero-phone">
+        <div class="phone-screen">
+          <div class="phone-chat">
+            <div class="phone-msg user-msg">|x - 3| &lt; 5 nasıl çözülür?</div>
+            <div class="phone-msg ai-msg typing">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Özellikler</span>
+        <h2 class="section-title">Neden EduAI?</h2>
+        <p class="section-subtitle">Öğrenmeyi kişiselleştiren, eksikleri tespit eden ve seni bir sonraki adıma hazırlayan akıllı asistan.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #6C63FF;">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Soru Analizi</h3>
+          <p>Gönderdiğin soruyu analiz ederek hangi konularla ilgili olduğunu ve hangi ön bilgileri gerektirdiğini tespit eder.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #FF6B6B;">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Eksik Konu Tespiti</h3>
+          <p>Öğrencinin hangi konularda eksik olduğunu belirleyerek kişiselleştirilmiş bir öğrenme yol haritası oluşturur.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #43E97B;">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>MEB Müfredatı Uyumlu</h3>
+          <p>Türkiye Milli Eğitim Bakanlığı müfredatına uygun konu anlatımı yapar. İlkokul'dan üniversiteye tüm kademeler desteklenir.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #F7971E;">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Adım Adım Çözüm</h3>
+          <p>Sadece cevap değil, mantığı anlatan adım adım çözüm süreçleriyle kalıcı öğrenme sağlar.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #A18CD1;">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Seviyeli Pratik Soruları</h3>
+          <p>Konuyu öğrendikten sonra kolay, orta ve zor seviyede benzer sorularla pratik yaparak pekiştirme sağlar.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #3ECFCF;">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>İlerleme Takibi</h3>
+          <p>Öğrencinin hangi konularda geliştiğini ve hangi alanlarda hâlâ desteğe ihtiyaç duyduğunu analiz eder.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Sistem</span>
+        <h2 class="section-title">Nasıl Çalışır?</h2>
+        <p class="section-subtitle">Beş adımda kişiselleştirilmiş öğrenme deneyimi</p>
+      </div>
+      <div class="steps-container">
+        <div class="step">
+          <div class="step-number">01</div>
+          <div class="step-content">
+            <h3>Soru Gönder</h3>
+            <p>Çözmekte zorlandığın soruyu metin olarak yaz veya fotoğraf yükle. Sistem hemen analiz etmeye başlar.</p>
+          </div>
+          <div class="step-icon">📝</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-number">02</div>
+          <div class="step-content">
+            <h3>Soru Analizi</h3>
+            <p>Yapay zeka sorunun içerdiği konu başlıklarını ve gerekli ön bilgileri tespit eder.</p>
+          </div>
+          <div class="step-icon">🔍</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-number">03</div>
+          <div class="step-content">
+            <h3>Ön Bilgi Analizi</h3>
+            <p>Hangi kısmı anlayamadığını belirt. Sistem eksik bilgileri tespit eder ve konu başlıklarını gösterir.</p>
+          </div>
+          <div class="step-icon">🧠</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-number">04</div>
+          <div class="step-content">
+            <h3>Konu Anlatımı</h3>
+            <p>MEB müfredatına uygun basit açıklamalar ve örnek sorularla adım adım konu anlatılır.</p>
+          </div>
+          <div class="step-icon">📚</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-number">05</div>
+          <div class="step-content">
+            <h3>Pratik Yap</h3>
+            <p>Konuyu pekiştirmek için kolay, orta ve zor seviyede benzer sorularla pratik yap.</p>
+          </div>
+          <div class="step-icon">⚡</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Subjects Section -->
+  <section class="subjects">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Dersler</span>
+        <h2 class="section-title">Desteklenen Dersler</h2>
+        <p class="section-subtitle">Şu an matematik odaklı; fizik, kimya ve diğer dersler yakında ekleniyor.</p>
+      </div>
+      <div class="subjects-grid">
+        <div class="subject-card active">
+          <div class="subject-emoji">📐</div>
+          <h3>Matematik</h3>
+          <span class="subject-badge active-badge">Aktif</span>
+          <p>Cebir, Geometri, Analiz, Sayılar, İstatistik ve daha fazlası</p>
+        </div>
+        <div class="subject-card coming">
+          <div class="subject-emoji">⚗️</div>
+          <h3>Kimya</h3>
+          <span class="subject-badge coming-badge">Yakında</span>
+          <p>Atomik yapı, Kimyasal tepkimeler, Organik kimya</p>
+        </div>
+        <div class="subject-card coming">
+          <div class="subject-emoji">🔭</div>
+          <h3>Fizik</h3>
+          <span class="subject-badge coming-badge">Yakında</span>
+          <p>Mekanik, Optik, Elektrik, Termodinamik</p>
+        </div>
+        <div class="subject-card coming">
+          <div class="subject-emoji">🌿</div>
+          <h3>Biyoloji</h3>
+          <span class="subject-badge coming-badge">Yakında</span>
+          <p>Hücre, Genetik, Ekosistem, İnsan fizyolojisi</p>
+        </div>
+        <div class="subject-card coming">
+          <div class="subject-emoji">🌍</div>
+          <h3>Sosyal Bilgiler</h3>
+          <span class="subject-badge coming-badge">Yakında</span>
+          <p>Coğrafya, Tarih, Vatandaşlık</p>
+        </div>
+        <div class="subject-card coming">
+          <div class="subject-emoji">📝</div>
+          <h3>Türkçe</h3>
+          <span class="subject-badge coming-badge">Yakında</span>
+          <p>Dilbilgisi, Paragraf, Anlam bilgisi</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Assistant Section -->
+  <section class="assistant-section" id="assistant">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Yapay Zeka Asistan</span>
+        <h2 class="section-title">EduAI Asistanı</h2>
+        <p class="section-subtitle">Sorunu yaz, adım adım analiz et ve öğren. Türkiye MEB müfredatına göre kişisel öğretmenin!</p>
+      </div>
+
+      <!-- Level & Subject Selectors -->
+      <div class="assistant-config">
+        <div class="config-group">
+          <label>Eğitim Kademesi</label>
+          <div class="config-options" id="levelOptions">
+            <button class="config-btn active" data-level="ilkokul">İlkokul</button>
+            <button class="config-btn" data-level="ortaokul">Ortaokul</button>
+            <button class="config-btn" data-level="lise">Lise</button>
+            <button class="config-btn" data-level="universite">Üniversite</button>
+          </div>
+        </div>
+        <div class="config-group">
+          <label>Ders</label>
+          <div class="config-options" id="subjectOptions">
+            <button class="config-btn active" data-subject="matematik">📐 Matematik</button>
+            <button class="config-btn disabled" data-subject="fizik" title="Yakında">⚗️ Fizik</button>
+            <button class="config-btn disabled" data-subject="kimya" title="Yakında">🧪 Kimya</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Interface -->
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="chat-header-left">
+            <div class="ai-avatar">
+              <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="url(#avatarGrad)"/><path d="M14 16h12M14 20h8M14 24h10" stroke="white" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="avatarGrad" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#6C63FF"/><stop offset="1" stop-color="#3ECFCF"/></linearGradient></defs></svg>
+            </div>
+            <div class="chat-header-info">
+              <span class="ai-name">EduAI Asistan</span>
+              <span class="ai-status">
+                <span class="status-dot"></span>
+                Çevrimiçi
+              </span>
+            </div>
+          </div>
+          <button class="clear-chat" id="clearChat" title="Sohbeti Temizle">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-message ai-message" id="welcomeMsg">
+            <div class="message-avatar">
+              <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="url(#msgGrad)"/><path d="M10 13h12M10 16h8M10 19h10" stroke="white" stroke-width="1.5" stroke-linecap="round"/><defs><linearGradient id="msgGrad" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#6C63FF"/><stop offset="1" stop-color="#3ECFCF"/></linearGradient></defs></svg>
+            </div>
+            <div class="message-content">
+              <div class="message-bubble">
+                <p>👋 Merhaba! Ben <strong>EduAI</strong>, senin kişisel öğrenme asistanın!</p>
+                <p>Türkiye MEB müfredatına uyumlu olarak çalışıyorum. Sana şu konularda yardımcı olabilirim:</p>
+                <ul>
+                  <li>📝 Soru çözme ve adım adım anlatım</li>
+                  <li>🔍 Konu ve ön bilgi analizi</li>
+                  <li>📚 MEB müfredatına uygun konu anlatımı</li>
+                  <li>⚡ Benzer pratik soru önerileri (kolay/orta/zor)</li>
+                </ul>
+                <p>Şu an <strong>Matematik</strong> dersi aktif. Bir soru yaz veya bir konu sor, hemen yardımcı olayım! 🚀</p>
+              </div>
+              <span class="message-time">Şimdi</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Suggestions -->
+        <div class="quick-suggestions" id="quickSuggestions">
+          <p class="suggestions-label">Hızlı Öneriler:</p>
+          <div class="suggestions-list">
+            <button class="suggestion-chip" data-msg="|x - 3| < 5 eşitsizliğini çöz">|x - 3| &lt; 5 çöz</button>
+            <button class="suggestion-chip" data-msg="Mutlak değer nedir, açıkla">Mutlak değer nedir?</button>
+            <button class="suggestion-chip" data-msg="2x + 3 = 11 denklemini çöz">2x + 3 = 11 çöz</button>
+            <button class="suggestion-chip" data-msg="Pisagor teoremini açıkla">Pisagor teoremi</button>
+            <button class="suggestion-chip" data-msg="Fonksiyon kavramını anlat">Fonksiyon nedir?</button>
+            <button class="suggestion-chip" data-msg="Türev nedir ve nasıl alınır?">Türev nedir?</button>
+          </div>
+        </div>
+
+        <!-- API Key Input -->
+        <div class="api-key-section" id="apiKeySection">
+          <div class="api-key-info">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>🆓 <strong>Ücretsiz</strong> Groq API anahtarı girin: <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> (Kredi kartı gerekmez!)</span>
+          </div>
+          <div class="api-key-input-row">
+            <input type="password" id="apiKeyInput" placeholder="gsk_..." autocomplete="off" />
+            <button class="btn-save-key" id="saveApiKey">Kaydet</button>
+          </div>
+          <p class="api-key-note">API anahtarınız yalnızca tarayıcınızda saklanır, hiçbir sunucuya gönderilmez.</p>
+        </div>
+
+        <div class="chat-input-area">
+          <div class="chat-input-wrapper">
+            <textarea
+              id="chatInput"
+              placeholder="Sorunuzu yazın... (örn: |x-3| < 5 nasıl çözülür?)"
+              rows="1"
+              aria-label="Soru girişi"
+            ></textarea>
+            <button class="send-btn" id="sendBtn" aria-label="Gönder">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <p class="input-hint">Enter ile gönder • Shift+Enter yeni satır</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="nav-logo">
+          <div class="logo-icon small">
+            <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="url(#footerGrad)"/><path d="M12 20L18 26L28 14" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="footerGrad" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#6C63FF"/><stop offset="1" stop-color="#3ECFCF"/></linearGradient></defs></svg>
+          </div>
+          <span class="logo-text">Edu<span class="logo-ai">AI</span></span>
+        </div>
+        <p>Türkiye MEB müfredatına uyumlu<br/>yapay zeka destekli öğrenme asistanı.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Platform</h4>
+          <a href="#features">Özellikler</a>
+          <a href="#how-it-works">Nasıl Çalışır</a>
+          <a href="#assistant">Asistan</a>
+        </div>
+        <div class="footer-col">
+          <h4>Dersler</h4>
+          <a href="#assistant">Matematik</a>
+          <a href="#">Fizik (Yakında)</a>
+          <a href="#">Kimya (Yakında)</a>
+        </div>
+        <div class="footer-col">
+          <h4>Kademeler</h4>
+          <a href="#">İlkokul</a>
+          <a href="#">Ortaokul</a>
+          <a href="#">Lise</a>
+          <a href="#">Üniversite</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 EduAI — Türkiye Müfredatına Uyumlu Yapay Zeka Öğrenme Asistanı. Tüm hakları saklıdır.</p>
+      <p>Türkiye MEB müfredatı esas alınmıştır.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
