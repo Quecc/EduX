@@ -29,6 +29,7 @@ const subjectOptions = document.getElementById('subjectOptions');
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
   setupNavbar();
+  setupThemeToggle();
   setupLevelSubjectButtons();
   setupChatInput();
   setupApiKey();
@@ -66,17 +67,32 @@ function setupNavbar() {
 }
 
 function setupHeroLinks() {
-  document.getElementById('heroStartBtn')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    document.getElementById('assistant').scrollIntoView({ behavior: 'smooth' });
-    setTimeout(() => chatInput.focus(), 600);
-  });
-  document.getElementById('startBtn')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    document.getElementById('assistant').scrollIntoView({ behavior: 'smooth' });
-    setTimeout(() => chatInput.focus(), 600);
+  // Butonlar artık chat.html'e yönlendiriyor — JS müdahalesi yok
+}
+
+// ── Dark / Light Mode ────────────────────────────────────────────────────────
+function setupThemeToggle() {
+  const btn = document.getElementById('themeToggle');
+  if (!btn) return;
+
+  // Kayıtlı tercihi uygula
+  const saved = localStorage.getItem('eduai_theme');
+  if (saved === 'light') {
+    document.body.classList.add('light-mode');
+    btn.textContent = '☀️';
+  }
+
+  btn.addEventListener('click', () => {
+    const isLight = document.body.classList.toggle('light-mode');
+    btn.textContent = isLight ? '☀️' : '🌙';
+    localStorage.setItem('eduai_theme', isLight ? 'light' : 'dark');
+
+    // Animasyon feedback
+    btn.style.transform = 'rotate(360deg) scale(1.2)';
+    setTimeout(() => btn.style.transform = '', 400);
   });
 }
+
 
 // ---- Level & Subject Buttons ----
 function setupLevelSubjectButtons() {
@@ -304,7 +320,7 @@ async function callGeminiAPI(userMessage) {
         threshold: "BLOCK_NONE"
       },
       {
-        category: "HARM_CATEGORY_HATE_SPEECH", 
+        category: "HARM_CATEGORY_HATE_SPEECH",
         threshold: "BLOCK_NONE"
       },
       {
