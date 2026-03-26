@@ -1,0 +1,266 @@
+/* schedule.css - Smart Schedule Styles */
+
+.schedule-wrapper {
+  max-width: 1200px;
+  margin: 100px auto 40px auto;
+  padding: 0 20px;
+}
+
+.schedule-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.schedule-title {
+  font-size: 2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-analyze-btn {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--trans);
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+}
+
+.ai-analyze-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+}
+
+/* Empty State */
+.schedule-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: var(--surface);
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.schedule-empty h3 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+}
+
+.schedule-empty p {
+  color: var(--text-muted);
+  max-width: 400px;
+  margin-bottom: 24px;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Calendar Grid */
+.calendar-wrapper {
+  display: none; /* hidden when empty */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(7, minmax(120px, 1fr));
+  grid-template-rows: 50px repeat(16, minmax(60px, auto));
+  gap: 1px;
+  background-color: var(--border);
+  min-width: 900px; /* Force scroll on small screens */
+}
+
+.cal-header {
+  background: var(--surface2);
+  padding: 12px;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+}
+
+.cal-time {
+  background: var(--surface);
+  text-align: right;
+  padding: 8px 12px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.cal-cell {
+  background: var(--surface);
+  position: relative;
+  transition: background 0.2s;
+  min-height: 60px;
+}
+
+.cal-cell:hover {
+  background: var(--surface2);
+  cursor: pointer;
+}
+
+.cal-cell.drag-over {
+  background: rgba(108, 99, 255, 0.1) !important;
+}
+
+/* Events */
+.cal-event {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  padding: 8px;
+  border-radius: var(--radius);
+  color: white;
+  font-size: 0.8rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10;
+  user-select: none;
+  overflow: hidden;
+}
+
+.cal-event:active {
+  cursor: grabbing;
+  opacity: 0.9;
+}
+
+.event-title {
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.event-topic {
+  font-size: 0.7rem;
+  opacity: 0.9;
+  line-height: 1.2;
+}
+
+.event-ai-icon {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  padding: 2px;
+  display: flex;
+}
+
+/* Modals & Drawers */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 6, 20, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  bottom: 0;
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  z-index: 1000;
+  box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer.active, .drawer-overlay.active {
+  right: 0;
+  opacity: 1;
+  pointer-events: all;
+}
+
+.drawer-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drawer-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Template Cards */
+.template-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--surface2);
+  transition: var(--trans);
+}
+
+.template-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.template-card h4 {
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.template-badge {
+  font-size: 0.7rem;
+  background: rgba(108, 99, 255, 0.2);
+  color: var(--primary-light);
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* Themes (Injected based on user level) */
+body.theme-primary .cal-event {
+  background: linear-gradient(135deg, #FF9A9E, #FECFEF); /* Pastel */
+  color: #333;
+}
+body.theme-primary .cal-event.math { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+body.theme-primary .cal-event.science { background: linear-gradient(135deg, #84fab0, #8fd3f4); }
+
+body.theme-highschool .cal-event {
+  background: linear-gradient(135deg, #2b5876, #4e4376); /* Corporate/Matte */
+}
+body.theme-highschool .cal-event.math { background: linear-gradient(135deg, #434343, #000000); }
+body.theme-highschool .cal-event.science { background: linear-gradient(135deg, #13547a, #80d0c7); }

@@ -1132,9 +1132,15 @@ input, textarea { font-family: inherit; }
   width: 100%; padding: 12px 16px;
   font-size: 0.875rem; color: var(--text-muted);
   transition: var(--trans);
+}
+.dropdown-item:last-child {
   border-radius: 0 0 var(--radius) var(--radius);
 }
 .dropdown-item:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+.dropdown-item.dropdown-item-danger:hover {
   background: rgba(255,107,107,0.08);
   color: var(--danger);
 }

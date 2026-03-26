@@ -120,10 +120,14 @@ function setupEventListeners() {
     window.location.href = 'index.html';
   });
 
-  // Sidebar toggle (mobil)
+  // Sidebar toggle (mobil & masaüstü)
   document.getElementById('sidebarToggleBtn').addEventListener('click', () => {
-    sidebar.classList.toggle('open');
-    sidebarOverlay.classList.toggle('active');
+    if (window.innerWidth <= 768) {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('active');
+    } else {
+      sidebar.classList.toggle('collapsed');
+    }
   });
   sidebarOverlay.addEventListener('click', () => {
     sidebar.classList.remove('open');

@@ -177,11 +177,13 @@ async function saveUserToFirestore(user, extra = {}) {
 }
 
 // ─── Navbar UI ────────────────────────────────────────────────────────────────
-function showUserInNavbar(user) {
+async function showUserInNavbar(user) {
   const authButtons = document.getElementById('navAuthButtons');
   const userProfile = document.getElementById('navUserProfile');
   const userName    = document.getElementById('navUserName');
+  const userClass   = document.getElementById('navUserClass');
   const userInitial = document.getElementById('navUserInitial');
+  const userInitial2 = document.getElementById('navUserInitial2');
   const userPhoto   = document.getElementById('navUserPhoto');
 
   if (!authButtons || !userProfile) return;
@@ -191,6 +193,22 @@ function showUserInNavbar(user) {
 
   if (userName)    userName.textContent = name;
   if (userInitial) userInitial.textContent = initial;
+  if (userInitial2) userInitial2.textContent = initial;
+
+  if (userClass && db) {
+    try {
+      const doc = await db.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        const data = doc.data();
+        const levelMap = { 'ilkokul': 'İlkokul (1-4. Sınıf)', 'ortaokul': 'Ortaokul (5-8. Sınıf)', 'lise': 'Lise (9-12. Sınıf)', 'universite': 'Üniversite' };
+        userClass.textContent = levelMap[data.level] || data.level || user.email;
+      } else {
+        userClass.textContent = user.email || '';
+      }
+    } catch(e) {
+      userClass.textContent = user.email || '';
+    }
+  }
 
   if (userPhoto && user.photoURL) {
     userPhoto.src   = user.photoURL;
@@ -203,6 +221,25 @@ function showUserInNavbar(user) {
 
   authButtons.style.display = 'none';
   userProfile.style.display = 'flex';
+
+  // --- Hero Section Updates (Giriş Yapıldı) ---
+  const welcomeText = document.getElementById('heroWelcomeText');
+  if (welcomeText) {
+    welcomeText.textContent = `Hoş geldin, ${name} 👋`;
+    welcomeText.style.display = 'block';
+  }
+
+  const heroStartBtn = document.getElementById('heroStartBtn');
+  if (heroStartBtn) {
+    heroStartBtn.innerHTML = '<img src="2.png" style="height:24px; filter:brightness(0) invert(1);" alt="EduX" />';
+  }
+
+  const heroSecondaryBtn = document.getElementById('heroSecondaryBtn');
+  const heroSecondaryText = document.getElementById('heroSecondaryText');
+  if (heroSecondaryBtn && heroSecondaryText) {
+    heroSecondaryText.textContent = 'Çalışma Programı';
+    heroSecondaryBtn.href = 'calisma-programi.html';
+  }
 }
 
 function showAuthButtonsInNavbar() {
@@ -210,6 +247,27 @@ function showAuthButtonsInNavbar() {
   const userProfile = document.getElementById('navUserProfile');
   if (authButtons) authButtons.style.display = 'flex';
   if (userProfile) userProfile.style.display = 'none';
+
+  // --- Hero Section Restores (Çıkış Yapıldı) ---
+  const welcomeText = document.getElementById('heroWelcomeText');
+  if (welcomeText) welcomeText.style.display = 'none';
+
+  const heroStartBtn = document.getElementById('heroStartBtn');
+  if (heroStartBtn) {
+    heroStartBtn.innerHTML = `
+          <span>Hemen Başla</span>
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+    `;
+  }
+
+  const heroSecondaryBtn = document.getElementById('heroSecondaryBtn');
+  const heroSecondaryText = document.getElementById('heroSecondaryText');
+  if (heroSecondaryBtn && heroSecondaryText) {
+    heroSecondaryText.textContent = 'Nasıl Çalışır';
+    heroSecondaryBtn.href = '#how-it-works';
+  }
 }
 
 // ─── Modal Yönetimi ──────────────────────────────────────────────────────────
@@ -311,6 +369,13 @@ function setupAuthForms() {
 
   // Çıkış butonu
   document.getElementById('navSignOutBtn')?.addEventListener('click', signOutUser);
+
+  // Ayar Butonları (Yapım Aşaması Bildirimi)
+  ['navProfileBtn', 'navSettingsBtn', 'navSupportBtn'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', () => {
+      showSuccessToast('Bu sayfa yakında eklenecektir! 🚀');
+    });
+  });
 
   // Modal kapatma
   document.querySelectorAll('.auth-modal-overlay, .auth-modal-close').forEach(el => {

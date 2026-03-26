@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduAI - Çalışma Programı</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="schedule.css" />
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body id="bodyArea">
+
+  <!-- Navbar Copt (identical structural requirement) -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <!-- Sol: Logo -->
+      <div class="nav-logo">
+        <a href="index.html">
+          <img src="2.png" alt="EduX" style="height:66px;object-fit:contain;filter:var(--logo-filter);display:block;" />
+        </a>
+      </div>
+
+      <!-- Sağ: Nav Linkleri, Kullanıcı Auth, Tema -->
+      <div class="nav-right" style="display:flex;align-items:center;gap:16px;">
+        <div class="nav-links">
+          <a href="index.html" class="nav-link">Ana Sayfa</a>
+          <a href="chat.html" class="nav-link nav-cta" id="startBtn">🚀 Asistanı Başlat</a>
+        </div>
+        <div id="navAuthButtons" class="nav-auth-buttons">
+          <button class="nav-auth-btn" id="navLoginBtn">Giriş Yap</button>
+          <button class="nav-auth-btn nav-auth-btn-primary" id="navRegisterBtn">Kayıt Ol</button>
+        </div>
+        <div id="navUserProfile" class="nav-user-profile" style="display:none;">
+          <button class="nav-user-avatar-btn" id="navUserAvatarBtn" title="Hesabım">
+            <img id="navUserPhoto" src="" alt="" style="display:none;" />
+            <span id="navUserInitial">?</span>
+          </button>
+          <div class="user-dropdown" id="userDropdown">
+            <div class="user-dropdown-header">
+              <div class="user-dropdown-avatar">
+                <span id="navUserInitial2">?</span>
+              </div>
+              <div class="user-dropdown-info">
+                <strong id="navUserName">Kullanıcı</strong>
+                <span id="navUserClass"></span>
+              </div>
+            </div>
+            <hr class="dropdown-divider" />
+            <button class="dropdown-item" id="navProfileBtn">
+              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Profilim
+            </button>
+            <button class="dropdown-item" id="navSettingsBtn">
+              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Hesap Ayarları
+            </button>
+            <button class="dropdown-item" id="navSupportBtn">
+              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Destek
+            </button>
+            <hr class="dropdown-divider" />
+            <button class="dropdown-item dropdown-item-danger" id="navSignOutBtn">
+              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Çıkış Yap
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="theme-toggle" id="themeToggle" title="Koyu/Açık Mod" aria-label="Tema değiştir">🌙</button>
+          <button class="hamburger" id="hamburger" aria-label="Menü">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Login Modal Placeholder (Inherited from app.js / auth.js) -->
+  <div class="auth-modal" id="loginModal"></div>
+
+  <!-- Main Content -->
+  <main class="schedule-wrapper">
+    <div class="schedule-header-actions">
+      <h1 class="schedule-title">
+        Çalışma <span class="gradient-text" style="font-family: var(--font-display);">Programım</span>
+      </h1>
+      <button class="ai-analyze-btn" id="analyzeBtn" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+          <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Programı Analiz Et
+      </button>
+    </div>
+
+    <!-- Empty State -->
+    <div class="schedule-empty" id="scheduleEmpty">
+      <h3>Henüz bir çalışma programın yok 👀</h3>
+      <p>Yeni bir rutin oluşturarak hedeflerine bir adım daha yaklaş!</p>
+      <div class="empty-actions">
+        <button class="btn-primary" id="btnCreateBlank">
+          Sıfırdan Oluştur
+        </button>
+        <button class="btn-secondary" id="btnSelectTemplate" style="display:none;">
+          Şablondan Seç 
+        </button>
+        <button class="btn-secondary" id="btnAiPlan">
+          ✨ Yapay Zeka ile Planla
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendar Wrapper -->
+    <div class="calendar-wrapper" id="calendarWrapper">
+      <div class="calendar-grid" id="calendarGrid">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Side Drawers overlay -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
+  <!-- Template Gallery Drawer -->
+  <div class="drawer" id="templateDrawer">
+    <div class="drawer-header">
+      <h3 style="margin:0;">Şablon Galerisi</h3>
+      <button class="auth-modal-x" id="closeTemplateDrawer">×</button>
+    </div>
+    <div class="drawer-body">
+      <!-- Filtreler -->
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;" id="templateFilters">
+        <!-- Buttons appended by JS -->
+      </div>
+      <div id="templateList"></div>
+    </div>
+  </div>
+
+  <!-- Analyze Result Drawer -->
+  <div class="drawer" id="analyzeDrawer">
+    <div class="drawer-header">
+      <h3 style="margin:0; font-family:var(--font-display); color:var(--primary);">Gemini Analizi ✨</h3>
+      <button class="auth-modal-x" id="closeAnalyzeDrawer">×</button>
+    </div>
+    <div class="drawer-body" id="analyzeContent" style="font-size:0.9rem; line-height:1.5;">
+      Yükleniyor...
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+  <script src="schedule.js" type="module"></script>
+</body>
+</html>
