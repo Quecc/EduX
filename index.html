@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduAI - Türkiye Müfredatına Uyumlu Yapay Zeka Öğrenme Asistanı</title>
+  <meta name="description"
+    content="Türkiye eğitim müfredatına uyumlu yapay zeka destekli soru çözme ve kişiselleştirilmiş öğrenme asistanı. İlkokul, ortaokul, lise ve üniversite öğrencileri için." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+
+      <!-- Sol: Logo -->
+      <div class="nav-logo">
+        <a href="#hero">
+          <img src="2.png" alt="EduX" style="height:66px;object-fit:contain;filter:var(--logo-filter);display:block;" />
+        </a>
+      </div>
+
+      <!-- Sağ: Nav Linkleri, Kullanıcı Auth, Tema -->
+      <div class="nav-right" style="display:flex;align-items:center;gap:16px;">
+        <!-- Element 1: Nav Linkleri -->
+        <div class="nav-links">
+          <a href="#hero" class="nav-link">Ana Sayfa</a>
+          <a href="#features" class="nav-link">Özellikler</a>
+          <a href="#how-it-works" class="nav-link">Nasıl Çalışır</a>
+          <a href="chat.html" class="nav-link nav-cta" id="startBtn">🚀 Asistanı Başlat</a>
+        </div>
+
+        <!-- Element 2: Auth Butonları OR Kullanıcı Profili -->
+        <div id="navAuthButtons" class="nav-auth-buttons">
+          <button class="nav-auth-btn" id="navLoginBtn">Giriş Yap</button>
+          <button class="nav-auth-btn nav-auth-btn-primary" id="navRegisterBtn">Kayıt Ol</button>
+        </div>
+        <div id="navUserProfile" class="nav-user-profile" style="display:none;">
+          <button class="nav-user-avatar-btn" id="navUserAvatarBtn" title="Hesabım">
+            <img id="navUserPhoto" src="" alt="" style="display:none;" />
+            <span id="navUserInitial">?</span>
+          </button>
+          <div class="user-dropdown" id="userDropdown">
+            <div class="user-dropdown-header">
+              <div class="user-dropdown-avatar">
+                <span id="navUserInitial2">?</span>
+              </div>
+              <div class="user-dropdown-info">
+                <strong id="navUserName">Kullanıcı</strong>
+                <span id="navUserClass"></span>
+              </div>
+            </div>
+            <hr class="dropdown-divider" />
+            <button class="dropdown-item" id="navProfileBtn">
+              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Profilim
+            </button>
+            <button class="dropdown-item" id="navSettingsBtn">
+              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+                <path
+                  d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Hesap Ayarları
+            </button>
+            <button class="dropdown-item" id="navSupportBtn">
+              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Destek
+            </button>
+            <hr class="dropdown-divider" />
+            <button class="dropdown-item dropdown-item-danger" id="navSignOutBtn">
+              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Çıkış Yap
+            </button>
+          </div>
+        </div>
+
+        <!-- Element 3: Tema Toggle + Hamburger -->
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="theme-toggle" id="themeToggle" title="Koyu/Açık Mod" aria-label="Tema değiştir">🌙</button>
+          <button class="hamburger" id="hamburger" aria-label="Menü">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <div class="hero-orb orb-1"></div>
+      <div class="hero-orb orb-2"></div>
+      <div class="hero-orb orb-3"></div>
+      <div class="grid-overlay"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        <span>Türkiye MEB Müfredatına Uyumlu</span>
+      </div>
+      <h2 id="heroWelcomeText"
+        style="display:none; font-family:var(--font-display); font-size:1.8rem; font-weight:800; color:var(--primary); margin-bottom:52px;">
+      </h2>
+      <h1 class="hero-title">
+        Yapay Zeka ile<br />
+        <span class="gradient-text">Akıllı Öğrenme</span><br />
+        Deneyimi
+      </h1>
+      <p class="hero-subtitle">
+        Sorularını analiz et, eksik konularını bul, konuları öğren ve pratik yap.
+        Kişiselleştirilmiş yapay zeka asistanınla her konuyu kolayca kavra.
+      </p>
+      <div class="hero-actions">
+        <a href="chat.html" class="btn-primary" id="heroStartBtn">
+          <span>Hemen Başla</span>
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </a>
+        <a href="#how-it-works" class="btn-secondary" id="heroSecondaryBtn">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+              fill="currentColor" />
+            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" />
+          </svg>
+          <span id="heroSecondaryText">Nasıl Çalışır</span>
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-num">5+</span>
+          <span class="stat-label">Ders</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">100+</span>
+          <span class="stat-label">Konu</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num">MEB</span>
+          <span class="stat-label">Uyumlu</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="floating-card card-1">
+        <div class="card-icon">📐</div>
+        <div class="card-text">
+          <strong>Matematik</strong>
+          <span>Mutlak Değer</span>
+        </div>
+        <div class="card-check">✓</div>
+      </div>
+      <div class="floating-card card-2">
+        <div class="card-icon"></div>
+        <div class="card-text">
+          <strong>Eksik Konu Tespiti</strong>
+          <span>3 konu bulundu</span>
+        </div>
+      </div>
+      <div class="floating-card card-3">
+        <div class="card-icon"></div>
+        <div class="card-text">
+          <strong>Anlık Çözüm</strong>
+          <span>Adım adım</span>
+        </div>
+      </div>
+      <div class="hero-phone">
+        <div class="phone-screen">
+          <div class="phone-chat">
+            <div class="phone-msg user-msg">|x - 3| &lt; 5 nasıl çözülür?</div>
+            <div class="phone-msg ai-msg typing">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Özellikler</span>
+        <h2 class="section-title">Neden EduAI?</h2>
+        <p class="section-subtitle">Öğrenmeyi kişiselleştiren, eksikleri tespit eden ve seni bir sonraki adıma
+          hazırlayan akıllı asistan.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #6C63FF;">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <h3>Soru Analizi</h3>
+          <p>Gönderdiğin soruyu analiz ederek hangi konularla ilgili olduğunu ve hangi ön bilgileri gerektirdiğini
+            tespit eder.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #FF6B6B;">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <h3>Eksik Konu Tespiti</h3>
+          <p>Öğrencinin hangi konularda eksik olduğunu belirleyerek kişiselleştirilmiş bir öğrenme yol haritası
+            oluşturur.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #43E97B;">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <h3>MEB Müfredatı Uyumlu</h3>
+          <p>Türkiye Milli Eğitim Bakanlığı müfredatına uygun konu anlatımı yapar. İlkokul'dan üniversiteye tüm
+            kademeler desteklenir.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #F7971E;">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+          <h3>Adım Adım Çözüm</h3>
+          <p>Sadece cevap değil, mantığı anlatan adım adım çözüm süreçleriyle kalıcı öğrenme sağlar.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #A18CD1;">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <h3>Seviyeli Pratik Soruları</h3>
+          <p>Konuyu öğrendikten sonra kolay, orta ve zor seviyede benzer sorularla pratik yaparak pekiştirme sağlar.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="--ic: #3ECFCF;">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <h3>İlerleme Takibi</h3>
+          <p>Öğrencinin hangi konularda geliştiğini ve hangi alanlarda hâlâ desteğe ihtiyaç duyduğunu analiz eder.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Sistem</span>
+        <h2 class="section-title">Nasıl Çalışır?</h2>
+        <p class="section-subtitle">Beş adımda kişiselleştirilmiş öğrenme deneyimi</p>
+      </div>
+      <div class="steps-container">
+        <div class="step">
+          <div class="step-number">01</div>
+          <div class="step-content">
+            <h3>Soru Gönder</h3>
+            <p>Çözmekte zorlandığın soruyu metin olarak yaz veya fotoğraf yükle. Sistem hemen analiz etmeye başlar.</p>
+          </div>
+          <div class="step-icon">📝</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-number">02</div>
+          <div class="step-content">
+            <h3>Soru Analizi</h3>
+            <p>Yapay zeka sorunun içerdiği konu başlıklarını ve gerekli ön bilgileri tespit eder.</p>
+          </div>
+          <div class="step-icon">🔍</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-number">03</div>
+          <div class="step-content">
+            <h3>Ön Bilgi Analizi</h3>
+            <p>Hangi kısmı anlayamadığını belirt. Sistem eksik bilgileri tespit eder ve konu başlıklarını gösterir.</p>
+          </div>
+          <div class="step-icon">🧠</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-number">04</div>
+          <div class="step-content">
+            <h3>Konu Anlatımı</h3>
+            <p>MEB müfredatına uygun basit açıklamalar ve örnek sorularla adım adım konu anlatılır.</p>
+          </div>
+          <div class="step-icon">📚</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-number">05</div>
+          <div class="step-content">
+            <h3>Pratik Yap</h3>
+            <p>Konuyu pekiştirmek için kolay, orta ve zor seviyede benzer sorularla pratik yap.</p>
+          </div>
+          <div class="step-icon">⚡</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Subjects Section -->
+  <section class="subjects">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Dersler</span>
+        <h2 class="section-title">Desteklenen Dersler</h2>
+        <p class="section-subtitle">Şu an matematik odaklı; fizik, kimya ve diğer dersler yakında ekleniyor.</p>
+      </div>
+      <div class="subjects-grid">
+        <div class="subject-card active">
+          <div class="subject-emoji">📐</div>
+          <h3>Matematik</h3>
+          <span class="subject-badge active-badge">Aktif</span>
+          <p>Cebir, Geometri, Analiz, Sayılar, İstatistik ve daha fazlası</p>
+        </div>
+        <div class="subject-card coming">
+          <div class="subject-emoji">⚗️</div>
+          <h3>Kimya</h3>
+          <span class="subject-badge coming-badge">Yakında</span>
+          <p>Atomik yapı, Kimyasal tepkimeler, Organik kimya</p>
+        </div>
+        <div class="subject-card coming">
+          <div class="subject-emoji">🔭</div>
+          <h3>Fizik</h3>
+          <span class="subject-badge coming-badge">Yakında</span>
+          <p>Mekanik, Optik, Elektrik, Termodinamik</p>
+        </div>
+        <div class="subject-card coming">
+          <div class="subject-emoji">🌿</div>
+          <h3>Biyoloji</h3>
+          <span class="subject-badge coming-badge">Yakında</span>
+          <p>Hücre, Genetik, Ekosistem, İnsan fizyolojisi</p>
+        </div>
+        <div class="subject-card coming">
+          <div class="subject-emoji">🌍</div>
+          <h3>Sosyal Bilgiler</h3>
+          <span class="subject-badge coming-badge">Yakında</span>
+          <p>Coğrafya, Tarih, Vatandaşlık</p>
+        </div>
+        <div class="subject-card coming">
+          <div class="subject-emoji">📝</div>
+          <h3>Türkçe</h3>
+          <span class="subject-badge coming-badge">Yakında</span>
+          <p>Dilbilgisi, Paragraf, Anlam bilgisi</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Asistan CTA Section -->
+  <section class="assistant-section" id="assistant">
+    <div class="container">
+      <div class="cta-card">
+        <div class="cta-card-glow"></div>
+        <div class="cta-icon">
+          <svg viewBox="0 0 64 64" fill="none" width="64" height="64">
+            <circle cx="32" cy="32" r="32" fill="url(#ctaGrad)" />
+            <path d="M20 32L28 40L44 24" stroke="white" stroke-width="3.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <defs>
+              <linearGradient id="ctaGrad" x1="0" y1="0" x2="64" y2="64">
+                <stop stop-color="#6C63FF" />
+                <stop offset="1" stop-color="#3ECFCF" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h2>Yapay Zeka Asistanı</h2>
+        <p>Türkiye MEB müfredatına uyumlu kişisel öğretmenin seni bekliyor.<br />Giriş yap ve hemen soru sormaya başla!
+        </p>
+        <div class="cta-actions">
+          <a href="chat.html" class="btn-primary cta-btn">
+            <span>🚀 Asistanı Aç</span>
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </a>
+        </div>
+        <p class="cta-note">🔒 Giriş yapman gerekiyor — ücretsiz kayıt ol</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="nav-logo">
+          <img src="2.png" alt="EduX"
+            style="height:144px;object-fit:contain;filter:brightness(0) invert(1);margin-bottom:8px;" />
+        </div>
+        <p>Türkiye MEB müfredatına uyumlu<br />yapay zeka destekli öğrenme asistanı.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Platform</h4>
+          <a href="#features">Özellikler</a>
+          <a href="#how-it-works">Nasıl Çalışır</a>
+          <a href="chat.html">Asistan</a>
+        </div>
+        <div class="footer-col">
+          <h4>Dersler</h4>
+          <a href="chat.html">Matematik</a>
+          <a href="#">Fizik (Yakında)</a>
+          <a href="#">Kimya (Yakında)</a>
+        </div>
+        <div class="footer-col">
+          <h4>Kademeler</h4>
+          <a href="#">İlkokul</a>
+          <a href="#">Ortaokul</a>
+          <a href="#">Lise</a>
+          <a href="#">Üniversite</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 EduAI — Türkiye Müfredatına Uyumlu Yapay Zeka Öğrenme Asistanı. Tüm hakları saklıdır.</p>
+      <p>Türkiye MEB müfredatı esas alınmıştır.</p>
+    </div>
+  </footer>
+
+  <!-- ════════════════════════════════════
+       GİRİŞ YAP MODAL
+  ════════════════════════════════════ -->
+  <div class="auth-modal" id="loginModal" role="dialog" aria-modal="true" aria-label="Giriş Yap">
+    <div class="auth-modal-overlay auth-modal-close"></div>
+    <div class="auth-modal-card">
+      <button class="auth-modal-close auth-modal-x" aria-label="Kapat">×</button>
+
+      <div class="auth-modal-header">
+        <div class="auth-modal-logo">
+          <svg viewBox="0 0 40 40" fill="none" width="36" height="36">
+            <circle cx="20" cy="20" r="20" fill="url(#lmGrad)" />
+            <path d="M12 20L18 26L28 14" stroke="white" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <defs>
+              <linearGradient id="lmGrad" x1="0" y1="0" x2="40" y2="40">
+                <stop stop-color="#6C63FF" />
+                <stop offset="1" stop-color="#3ECFCF" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h2>Hoş Geldin!</h2>
+        <p>EduAI hesabına giriş yap</p>
+      </div>
+
+      <!-- Sosyal Giriş -->
+      <div class="auth-social-buttons">
+        <button class="auth-social-btn google-btn" data-auth="google" id="googleLoginBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4" />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853" />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+              fill="#FBBC05" />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335" />
+          </svg>
+          <span>Google ile Giriş Yap</span>
+        </button>
+        <button class="auth-social-btn apple-btn" data-auth="apple" id="appleLoginBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path
+              d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+          </svg>
+          <span>Apple ile Giriş Yap</span>
+        </button>
+      </div>
+
+      <div class="auth-divider"><span>veya e-posta ile</span></div>
+
+      <!-- E-posta Formu -->
+      <form id="loginForm" class="auth-form" novalidate>
+        <div class="auth-form-group">
+          <label for="loginEmail">E-posta</label>
+          <div class="auth-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+              <path
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <input type="email" id="loginEmail" placeholder="ornek@mail.com" autocomplete="email" required />
+          </div>
+        </div>
+        <div class="auth-form-group">
+          <label for="loginPassword">
+            Şifre
+            <a href="#" id="forgotPasswordLink" class="auth-forgot">Şifremi unuttum</a>
+          </label>
+          <div class="auth-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+              <path
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <input type="password" id="loginPassword" placeholder="Şifreniz" autocomplete="current-password" required />
+            <button type="button" class="toggle-password" data-target="loginPassword"
+              aria-label="Şifreyi göster">👁</button>
+          </div>
+        </div>
+        <div id="loginError" class="auth-error-box error" style="display:none;"></div>
+        <button type="submit" class="auth-submit-btn" id="emailLoginSubmit">Giriş Yap</button>
+      </form>
+
+      <p class="auth-switch-text">
+        Hesabın yok mu? <a href="#" id="switchToRegister">Kayıt Ol</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       KAYIT OL MODAL
+  ════════════════════════════════════ -->
+  <div class="auth-modal" id="registerModal" role="dialog" aria-modal="true" aria-label="Kayıt Ol">
+    <div class="auth-modal-overlay auth-modal-close"></div>
+    <div class="auth-modal-card auth-modal-card--wide">
+      <button class="auth-modal-close auth-modal-x" aria-label="Kapat">×</button>
+
+      <div class="auth-modal-header">
+        <div class="auth-modal-logo">
+          <svg viewBox="0 0 40 40" fill="none" width="36" height="36">
+            <circle cx="20" cy="20" r="20" fill="url(#rmGrad)" />
+            <path d="M12 20L18 26L28 14" stroke="white" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <defs>
+              <linearGradient id="rmGrad" x1="0" y1="0" x2="40" y2="40">
+                <stop stop-color="#6C63FF" />
+                <stop offset="1" stop-color="#3ECFCF" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h2>Hesap Oluştur</h2>
+        <p>EduAI'ye ücretsiz katıl</p>
+      </div>
+
+      <!-- Sosyal Kayıt -->
+      <div class="auth-social-buttons">
+        <button class="auth-social-btn google-btn" data-auth="google" id="googleRegisterBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4" />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853" />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+              fill="#FBBC05" />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335" />
+          </svg>
+          <span>Google ile Kayıt Ol</span>
+        </button>
+        <button class="auth-social-btn apple-btn" data-auth="apple" id="appleRegisterBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path
+              d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+          </svg>
+          <span>Apple ile Kayıt Ol</span>
+        </button>
+      </div>
+
+      <div class="auth-divider"><span>veya bilgilerini gir</span></div>
+
+      <!-- Kayıt Formu -->
+      <form id="registerForm" class="auth-form" novalidate>
+        <div class="auth-form-row">
+          <div class="auth-form-group">
+            <label for="regFullName">Ad Soyad <span class="required">*</span></label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <input type="text" id="regFullName" placeholder="Adınız Soyadınız" autocomplete="name" required />
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label for="regBirthYear">Doğum Yılı</label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <input type="number" id="regBirthYear" placeholder="örn. 2008" min="1980" max="2020" />
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label for="regEmail">E-posta <span class="required">*</span></label>
+          <div class="auth-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+              <path
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <input type="email" id="regEmail" placeholder="ornek@mail.com" autocomplete="email" required />
+          </div>
+        </div>
+
+        <div class="auth-form-group">
+          <label for="regLevel">Okul Kademesi</label>
+          <div class="auth-input-wrap auth-input-select">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+              <path d="M12 14l9-5-9-5-9 5 9 5zm0 7v-6m-7-3.5v5l7 4 7-4v-5" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <select id="regLevel">
+              <option value="">Seçiniz (isteğe bağlı)</option>
+              <option value="ilkokul">İlkokul (1-4. Sınıf)</option>
+              <option value="ortaokul">Ortaokul (5-8. Sınıf)</option>
+              <option value="lise">Lise (9-12. Sınıf)</option>
+              <option value="universite">Üniversite</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="auth-form-row">
+          <div class="auth-form-group">
+            <label for="regPassword">Şifre <span class="required">*</span></label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <input type="password" id="regPassword" placeholder="En az 8 karakter" autocomplete="new-password"
+                required />
+              <button type="button" class="toggle-password" data-target="regPassword"
+                aria-label="Şifreyi göster">👁</button>
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label for="regPassword2">Şifre Tekrar <span class="required">*</span></label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <input type="password" id="regPassword2" placeholder="Şifreyi tekrar girin" autocomplete="new-password"
+                required />
+            </div>
+          </div>
+        </div>
+
+        <!-- Şifre Güç Göstergesi -->
+        <div class="password-strength">
+          <div class="password-strength-track">
+            <div id="passwordStrengthBar" class="password-strength-bar"></div>
+          </div>
+          <span id="passwordStrengthLabel"></span>
+        </div>
+
+        <div id="registerError" class="auth-error-box error" style="display:none;"></div>
+
+        <button type="submit" class="auth-submit-btn" id="emailRegisterSubmit">Hesap Oluştur 🚀</button>
+        <p class="auth-terms">Kayıt olarak <a href="#">Kullanım Koşulları</a>'nı kabul etmiş olursunuz.</p>
+      </form>
+
+      <p class="auth-switch-text">
+        Zaten hesabın var mı? <a href="#" id="switchToLogin">Giriş Yap</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="auth.js"></script>
+</body>
+
+</html>

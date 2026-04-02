@@ -1,0 +1,14 @@
+.venv/
+.vscode/
+*.log
+tmp/
+.firebase/
+.firebaserc
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+pdf-input/
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/

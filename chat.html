@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduAI — Yapay Zeka Asistanı</title>
+  <meta name="description"
+    content="EduAI ile birebir yapay zeka destekli öğrenme deneyimi. Soru sor, konu öğren, pratik yap." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <!-- KaTeX — Matematik Formül Render -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="chat.css" />
+</head>
+
+<body>
+
+  <!-- ── Auth Yükleniyor Ekranı ─────────────────────────── -->
+  <div id="authLoadingScreen" class="auth-loading">
+    <div class="auth-loading-inner">
+      <img src="Xyanınaedu.png" alt="EduX"
+        style="width:100px;height:100px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(108,99,255,0.4));animation:logo-pulse 3s ease infinite;" />
+      <p>Yükleniyor...</p>
+    </div>
+  </div>
+
+  <!-- ── Giriş Gerekiyor Ekranı ─────────────────────────── -->
+  <div id="loginRequiredScreen" class="login-required" style="display:none;">
+    <div class="login-required-card">
+      <div class="login-req-logo">
+        <img src="2.png" alt="EduX" style="height:56px;object-fit:contain;filter:brightness(0) invert(1);" />
+      </div>
+      <h2>Giriş Gerekli</h2>
+      <p>AI asistanını kullanmak için önce giriş yapman gerekiyor.</p>
+      <a href="index.html" class="login-req-btn">Ana Sayfaya Git &amp; Giriş Yap</a>
+    </div>
+  </div>
+
+  <!-- ── Ana Chat Uygulaması ────────────────────────────── -->
+  <div id="chatApp" class="chat-app" style="display:none;">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <!-- Sidebar Header -->
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-logo">
+          <img src="2.png" alt="EduX" style="height:111px;object-fit:contain;filter:brightness(0) invert(1);" />
+        </a>
+        <button class="new-chat-btn" id="newChatBtn" title="Yeni Sohbet">
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Conversations List -->
+      <div class="conv-list-wrapper">
+        <div class="conv-list" id="convList">
+          <div class="conv-empty" id="convEmpty">
+            <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
+              <path
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <p>Henüz sohbet yok</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="sidebar-user" id="sidebarUser">
+          <div class="sidebar-avatar" id="sidebarAvatar">?</div>
+          <div class="sidebar-user-info">
+            <strong id="sidebarUserName">Kullanıcı</strong>
+            <span id="sidebarUserEmail"></span>
+          </div>
+          <button class="sidebar-logout-btn" id="sidebarLogoutBtn" title="Çıkış Yap">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+              <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Sidebar Overlay (mobil) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Ana Chat Alanı -->
+    <main class="chat-main">
+      <!-- Topbar -->
+      <div class="chat-topbar">
+        <button class="topbar-menu-btn" id="sidebarToggleBtn" aria-label="Menü">
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+        <span class="topbar-title" id="chatTitle">Yeni Sohbet</span>
+        <!-- Ayarlar (Kullanıcı girişinden otomatik alındığı için gizlendi) -->
+        <div class="topbar-settings" style="display: none;">
+          <div class="setting-group">
+            <select id="levelSelect" class="setting-select">
+              <option value="ilkokul">İlkokul</option>
+              <option value="ortaokul" selected>Ortaokul</option>
+              <option value="lise">Lise</option>
+              <option value="universite">Üniversite</option>
+            </select>
+          </div>
+          <div class="setting-group">
+            <select id="subjectSelect" class="setting-select">
+              <option value="matematik" selected>📐 Matematik</option>
+              <option value="fizik">⚗️ Fizik</option>
+              <option value="kimya">🧪 Kimya</option>
+              <option value="biyoloji">🌿 Biyoloji</option>
+              <option value="turkce">📝 Türkçe</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mesaj Alanı -->
+      <div class="messages-area" id="messagesArea">
+
+        <!-- Karşılama Ekranı -->
+        <div class="welcome-screen" id="welcomeScreen">
+          <div class="welcome-logo">
+            <img src="educresimli.png" alt="EduX"
+              style="width:6000px;height:400px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(108,99,255,0.4));animation:logo-pulse 3s ease infinite;" />
+          </div>
+          <h1>EduAI'ye Hoş Geldin!</h1>
+          <p>Türkiye MEB müfredatına uyumlu yapay zeka asistanın.<br />Herhangi bir soru ya da konu hakkında yardım
+            isteyebilirsin.</p>
+          <div class="welcome-suggestions">
+            <button class="welcome-chip" data-msg="Pisagor teoremini açıkla ve örnek ver">📐 Pisagor teoremi
+              nedir?</button>
+            <button class="welcome-chip" data-msg="2x + 5 = 13 denklemini adım adım çöz">🔢 Denklem çözümü
+              göster</button>
+            <button class="welcome-chip" data-msg="Mutlak değer nedir, nasıl hesaplanır?">📊 Mutlak değer anlat</button>
+            <button class="welcome-chip" data-msg="Türev nedir ve nasıl alınır? Örneklerle anlat">∫ Türev
+              nedir?</button>
+            <button class="welcome-chip" data-msg="Işığın kırılması nedir?">💡 Işığın kırılması</button>
+            <button class="welcome-chip" data-msg="Hücre bölünmesi mitoz ve mayoz arasındaki fark nedir?">🌿 Hücre
+              bölünmesi</button>
+          </div>
+        </div>
+
+        <!-- Mesajlar buraya eklenir -->
+        <div id="messagesList" class="messages-list"></div>
+
+      </div>
+
+      <!-- Input Alanı -->
+      <div class="input-area">
+        <!-- Görsel Önizleme Şeridi -->
+        <div class="image-preview-strip" id="imagePreviewStrip" style="display:none;"></div>
+
+        <div class="input-card">
+          <!-- Görsel Yükleme Butonu -->
+          <button class="attach-btn" id="attachBtn" title="Görsel ekle" type="button" aria-label="Görsel ekle">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+              <path
+                d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.41 17.41a2 2 0 01-2.83-2.83l8.49-8.48"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <input type="file" id="imageInput" accept="image/*" multiple style="display:none;" aria-label="Görsel seç" />
+
+          <textarea id="msgInput" class="msg-textarea"
+            placeholder="Sorunuzu yazın veya görsel ekleyin... (Enter = gönder, Shift+Enter = yeni satır)" rows="1"
+            aria-label="Mesaj girin"></textarea>
+          <button class="send-btn" id="sendBtn" aria-label="Gönder" disabled>
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+              <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <p class="input-hint">EduAI hatalar yapabilir. Önemli bilgileri doğrulayın. 📎 Görsel ekleyebilirsiniz.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="edux-ai.js"></script>
+  <script src="chat.js"></script>
+</body>
+
+</html>
