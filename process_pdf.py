@@ -1,9 +1,9 @@
 """
-EduX - MEB Ders Kitabı PDF İşleyici v2 (Surya + pdfplumber)
+EduX - MEB Ders Kitabı PDF İşleyici v2 (Surya + pdfplumber) 
 ============================================================
 Kullanım:
   python process_pdf.py                  → pdf-input/ klasörünün tamamını işle
-  python process_pdf.py dosya.pdf        → tek dosya işle
+  python process_pdf.py dosya.pdf       → tek dosya işle 
 """
 
 import sys, os, json, re, glob
@@ -19,7 +19,7 @@ def try_import(mod):
 
 pdfplumber = try_import('pdfplumber')
 surya_available = False
-
+    
 try:
     from PIL import Image as PILImage
     import pypdfium2 as pdfium

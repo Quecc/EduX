@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- AI Integrations (Gemini) ---
-  const GEMINI_KEY = window.localStorage ? localStorage.getItem('eduai_gemini_key') || 'AIzaSyAdwKVmcGfrW9bmvVVbIbF64sc6pscMVxQ' : 'AIzaSyAdwKVmcGfrW9bmvVVbIbF64sc6pscMVxQ';
+  const GEMINI_KEY = window.localStorage ? localStorage.getItem('eduai_gemini_key') || 'AIzaSyA8UNkSXTCmtmxxizsfi-rgKwFxuJRi0KE' : 'AIzaSyA8UNkSXTCmtmxxizsfi-rgKwFxuJRi0KE';
 
   async function callGemini(promptText) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;

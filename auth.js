@@ -1,5 +1,5 @@
 /* =============================================
-   EduAI - Firebase Authentication
+   BearEdu - Firebase Authentication
    Giriş / Kayıt / Google / Apple
    =============================================
    ⚠️  KURULUM: Firebase config'ini aşağıya girin!
@@ -231,7 +231,7 @@ async function showUserInNavbar(user) {
 
   const heroStartBtn = document.getElementById('heroStartBtn');
   if (heroStartBtn) {
-    heroStartBtn.innerHTML = '<img src="2.png" style="height:24px; filter:brightness(0) invert(1);" alt="EduX" />';
+    heroStartBtn.innerHTML = '<img src="2.png" style="height:24px; filter:brightness(0) invert(1);" alt="BearEdu" />';
   }
 
   const heroSecondaryBtn = document.getElementById('heroSecondaryBtn');

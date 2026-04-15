@@ -1,11 +1,11 @@
 /**
- * EduX AI Engine v2 — Doğal Cevap Veren Kendi Yapay Zekami
+ * BearEdu AI Engine v2 — Doğal Cevap Veren Kendi Yapay Zekami
  * ===========================================================
  * API key yok. Soru-cevap tabanlı, ChatGPT gibi doğal cevap verir.
  * Soruyu anlayıp direkt cevaplar — şablon değil, bilgi.
  */
 
-const EduXAI = (() => {
+const BearEduAI = (() => {
 
   // ─────────────────────────────────────────────────────────────
   // NLP ARAÇLARI
@@ -38,7 +38,7 @@ const EduXAI = (() => {
     // ── SELAMLAMA ───────────────────────────────────────────────
     {
       match: t => has(t,'merhaba','selam','hey','günaydın','iyi günler','hello','hi '),
-      answer: () => `## 👋 Merhaba! Ben EduX AI
+      answer: () => `## 👋 Merhaba! Ben BearEdu AI
 
 Seni Matematik, Geometri, Türev, İntegral ve daha pek çok konuda desteklemek için buradayım!
 

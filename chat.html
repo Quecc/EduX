@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EduAI — Yapay Zeka Asistanı</title>
+  <title>BearEdu — Yapay Zeka Asistanı</title>
   <meta name="description"
-    content="EduAI ile birebir yapay zeka destekli öğrenme deneyimi. Soru sor, konu öğren, pratik yap." />
+    content="BearEdu ile birebir yapay zeka destekli öğrenme deneyimi. Soru sor, konu öğren, pratik yap." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -15,7 +15,8 @@
   <!-- KaTeX — Matematik Formül Render -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+    crossorigin="anonymous"></script>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -28,7 +29,7 @@
   <!-- ── Auth Yükleniyor Ekranı ─────────────────────────── -->
   <div id="authLoadingScreen" class="auth-loading">
     <div class="auth-loading-inner">
-      <img src="Xyanınaedu.png" alt="EduX"
+      <img src="beareduxaimg.png" alt="BearEdu"
         style="width:100px;height:100px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(108,99,255,0.4));animation:logo-pulse 3s ease infinite;" />
       <p>Yükleniyor...</p>
     </div>
@@ -38,7 +39,7 @@
   <div id="loginRequiredScreen" class="login-required" style="display:none;">
     <div class="login-required-card">
       <div class="login-req-logo">
-        <img src="2.png" alt="EduX" style="height:56px;object-fit:contain;filter:brightness(0) invert(1);" />
+        <img src="beareduxaimg.png" alt="BearEdu" style="height:56px;object-fit:contain;filter:brightness(0) invert(1);" />
       </div>
       <h2>Giriş Gerekli</h2>
       <p>AI asistanını kullanmak için önce giriş yapman gerekiyor.</p>
@@ -54,7 +55,8 @@
       <!-- Sidebar Header -->
       <div class="sidebar-header">
         <a href="index.html" class="sidebar-logo">
-          <img src="2.png" alt="EduX" style="height:111px;object-fit:contain;filter:brightness(0) invert(1);" />
+          <img src="beareduxaimg.png" alt="BearEdu"
+            style="height:111px;object-fit:contain;filter:brightness(0) invert(1);" />
         </a>
         <button class="new-chat-btn" id="newChatBtn" title="Yeni Sohbet">
           <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
@@ -136,10 +138,10 @@
         <!-- Karşılama Ekranı -->
         <div class="welcome-screen" id="welcomeScreen">
           <div class="welcome-logo">
-            <img src="educresimli.png" alt="EduX"
-              style="width:6000px;height:400px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(108,99,255,0.4));animation:logo-pulse 3s ease infinite;" />
+            <img src="beareduxaimg.png" alt="BearEdu"
+              style="width:4000px;height:400px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(255, 0, 0, 0.4));animation:logo-pulse 3s ease infinite;" />
           </div>
-          <h1>EduAI'ye Hoş Geldin!</h1>
+          <h1>BearEdu'ye Hoş Geldin!</h1>
           <p>Türkiye MEB müfredatına uyumlu yapay zeka asistanın.<br />Herhangi bir soru ya da konu hakkında yardım
             isteyebilirsin.</p>
           <div class="welcome-suggestions">
@@ -187,7 +189,7 @@
             </svg>
           </button>
         </div>
-        <p class="input-hint">EduAI hatalar yapabilir. Önemli bilgileri doğrulayın. 📎 Görsel ekleyebilirsiniz.</p>
+        <p class="input-hint">BearEdu hatalar yapabilir. Önemli bilgileri doğrulayın. 📎 Görsel ekleyebilirsiniz.</p>
       </div>
     </main>
   </div>

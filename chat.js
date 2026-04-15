@@ -1,5 +1,5 @@
 /* =============================================
-   EduAI Chat Page — chat.js
+   BearEdu Chat Page — chat.js
    Firebase Auth + Firestore + Gemini API
    ============================================= */
 
@@ -14,10 +14,10 @@ const firebaseConfig = {
   measurementId: "G-HJTYMZ9TV9"
 };
 
-const GEMINI_KEY = '';
+const GEMINI_KEY = 'AIzaSyA8UNkSXTCmtmxxizsfi-rgKwFxuJRi0KE';
 
 
-const GROQ_SYSTEM_PROMPT = `Sen EduX AI Assistant - Türkiye MEB müfredatına uyumlu bir öğretmensin.
+const GROQ_SYSTEM_PROMPT = `Sen BearEdu AI Assistant - Türkiye MEB müfredatına uyumlu bir öğretmensin.
 Her zaman Türkçe cevap ver. Matematikte adım adım çöz ve formülleri açıkla.
 Kısa ve net ol. Markdown formatı kullan.`;
 
@@ -704,7 +704,7 @@ function buildPrompt(kbContext = '') {
     ? `\nAŞAĞIDAKİ DERS KİTABI BÖLÜMÜNÜ KULLAN: Cevabını mümkün olduğunda bu bölümdeki anlatım, örnek ve terminolojiyle destekle.${kbContext}`
     : '';
 
-  return `Sen EduAI, Türkiye MEB müfredatına uyumlu ${levelMap[level] || 'Ortaokul'} düzeyinde ${subjectMap[subject] || 'Matematik'} uzmanı öğretmensin.${kbSection}
+  return `Sen BearEdu AI, Türkiye MEB müfredatına uyumlu ${levelMap[level] || 'Ortaokul'} düzeyinde ${subjectMap[subject] || 'Matematik'} uzmanı öğretmensin.${kbSection}
 
 FORMAT:
 - 📌 **Konu**: Sorunun konusu
@@ -751,7 +751,7 @@ function appendMessage(role, content, animate = true, images = []) {
 
   const avatarHTML = isAI
     ? `<div class="msg-avatar ai-avatar" style="background:transparent;border:1.5px solid rgba(108,99,255,0.3);">
-        <img src="educresimli.png" alt="EduX" style="width:26px;height:26px;object-fit:contain;" />
+        <img src="beareduxaimg.png" alt="BearEdu" style="width:26px;height:26px;object-fit:contain;" />
        </div>`
     : `<div class="msg-avatar user-avatar">${userInitial}</div>`;
 
@@ -768,7 +768,7 @@ function appendMessage(role, content, animate = true, images = []) {
     <div class="msg-inner">
       ${avatarHTML}
       <div class="msg-content">
-        <div class="msg-name">${isAI ? 'EduAI' : escapeHtml(userName)}</div>
+        <div class="msg-name">${isAI ? 'BearEdu AI' : escapeHtml(userName)}</div>
         ${imagesHTML}
         <div class="msg-text">${formattedContent}</div>
         <div class="msg-actions">
@@ -804,10 +804,10 @@ function showTyping() {
   row.innerHTML = `
     <div class="msg-inner">
       <div class="msg-avatar ai-avatar" style="background:transparent;border:1.5px solid rgba(108,99,255,0.3);">
-        <img src="" alt="EduX" style="width:26px;height:26px;object-fit:contain;" />
+        <img src="" alt="BearEdu" style="width:26px;height:26px;object-fit:contain;" />
       </div>
       <div class="msg-content">
-        <div class="msg-name">EduAI</div>
+        <div class="msg-name">BearEdu AI</div>
         <div class="msg-text">
           <div class="typing-dot"></div>
           <div class="typing-dot"></div>

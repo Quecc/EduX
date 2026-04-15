@@ -1,10 +1,10 @@
 /* =============================================
-   EduAI - Yapay Zeka Öğrenme Asistanı
+   BearEdu - Yapay Zeka Öğrenme Asistanı
    JavaScript Uygulama Mantığı + Google Gemini API
    ============================================= */
 
 // ---- State ----
-const DEFAULT_API_KEY = ''; // API key devre dışı — eklemek için buraya yaz
+const DEFAULT_API_KEY = 'AIzaSyA8UNkSXTCmtmxxizsfi-rgKwFxuJRi0KE'; // API key devre dışı — eklemek için buraya yaz
 
 const state = {
   apiKey: DEFAULT_API_KEY,
@@ -381,7 +381,7 @@ function buildSystemPrompt() {
     kimya: 'Kimya',
   };
 
-  return `Sen EduAI - ${levelMap[state.level] || 'Ortaokul'} düzeyinde ${subjectMap[state.subject] || 'Matematik'} uzmanı öğretmensin.
+  return `Sen BearEdu AI - ${levelMap[state.level] || 'Ortaokul'} düzeyinde ${subjectMap[state.subject] || 'Matematik'} uzmanı öğretmensin.
 
 KISA FORMAT:
 - 📌 Konu: Sorunun hangi konuyla ilgili
@@ -474,6 +474,7 @@ function scrollToBottom() {
 function getTime() {
   return new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 }
+
 
 function escapeHtml(text) {
   return text
