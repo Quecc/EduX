@@ -11,4 +11,13 @@ pdf-input/
 __pycache__/
 *.pyc
 .DS_Store
+**/.DS_Store
 node_modules/
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+*.local
+secrets.json
+config.local.js

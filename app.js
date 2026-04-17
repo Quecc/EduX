@@ -1,13 +1,10 @@
 /* =============================================
    BearEdu - Yapay Zeka Öğrenme Asistanı
-   JavaScript Uygulama Mantığı + Google Gemini API
+   JavaScript uygulama mantığı
    ============================================= */
 
 // ---- State ----
-const DEFAULT_API_KEY = 'AIzaSyA8UNkSXTCmtmxxizsfi-rgKwFxuJRi0KE'; // API key devre dışı — eklemek için buraya yaz
-
 const state = {
-  apiKey: DEFAULT_API_KEY,
   level: 'ortaokul',
   subject: 'matematik',
   chatHistory: [],
@@ -32,19 +29,19 @@ document.addEventListener('DOMContentLoaded', () => {
   setupThemeToggle();
   setupLevelSubjectButtons();
   setupChatInput();
-  setupApiKey();
   setupClearChat();
   setupSuggestions();
   setupHeroLinks();
-  autoResizeTextarea();
-
-  // API key her zaman hazır, otomatik olarak kayıtlı göster
-  markApiKeySaved();
+  if (chatInput) {
+    autoResizeTextarea();
+  }
 });
 
 // ---- Navbar Scroll Effect ----
 function setupNavbar() {
   const navbar = document.getElementById('navbar');
+  if (!navbar) return;
+
   window.addEventListener('scroll', () => {
     navbar.classList.toggle('scrolled', window.scrollY > 30);
   });
@@ -52,6 +49,8 @@ function setupNavbar() {
   // Hamburger
   const hamburger = document.getElementById('hamburger');
   const navLinks = document.querySelector('.nav-links');
+  if (!hamburger || !navLinks) return;
+
   hamburger.addEventListener('click', () => {
     navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
     navLinks.style.flexDirection = 'column';
@@ -96,6 +95,8 @@ function setupThemeToggle() {
 
 // ---- Level & Subject Buttons ----
 function setupLevelSubjectButtons() {
+  if (!levelOptions || !subjectOptions) return;
+
   levelOptions.querySelectorAll('.config-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       levelOptions.querySelectorAll('.config-btn').forEach(b => b.classList.remove('active'));
@@ -112,48 +113,10 @@ function setupLevelSubjectButtons() {
   });
 }
 
-// ---- API Key ----
-function setupApiKey() {
-  saveApiKeyBtn.addEventListener('click', () => {
-    const key = apiKeyInput.value.trim();
-    if (!key || !key.startsWith('AIzaSy')) {
-      showApiError('Lütfen geçerli bir Google Gemini API anahtarı girin (AIzaSy ile başlamalı).');
-      return;
-    }
-    state.apiKey = key;
-    localStorage.setItem('eduai_gemini_key', key);
-    markApiKeySaved();
-    addAiMessage('✅ Google Gemini API anahtarınız kaydedildi! Artık soru sorabilirsiniz. 🚀');
-  });
-}
-
-function markApiKeySaved() {
-  apiKeySection.classList.add('saved');
-  apiKeySection.innerHTML = `
-    <div class="api-key-info">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span style="color: var(--success);">✓ Google Gemini API anahtarı kayıtlı.
-        <button id="changeKey" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.82rem;text-decoration:underline;">Değiştir</button>
-      </span>
-    </div>
-  `;
-  document.getElementById('changeKey')?.addEventListener('click', () => {
-    state.apiKey = '';
-    localStorage.removeItem('eduai_gemini_key');
-    location.reload();
-  });
-}
-
-function showApiError(msg) {
-  const err = document.createElement('p');
-  err.style.cssText = 'color:var(--danger);font-size:0.8rem;margin-top:6px;';
-  err.textContent = msg;
-  apiKeySection.appendChild(err);
-  setTimeout(() => err.remove(), 3000);
-}
-
 // ---- Suggestions ----
 function setupSuggestions() {
+  if (!chatInput || !quickSuggestions) return;
+
   document.querySelectorAll('.suggestion-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const msg = chip.dataset.msg;
@@ -167,6 +130,8 @@ function setupSuggestions() {
 
 // ---- Chat Input ----
 function setupChatInput() {
+  if (!sendBtn || !chatInput) return;
+
   sendBtn.addEventListener('click', sendMessage);
   chatInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -178,12 +143,15 @@ function setupChatInput() {
 }
 
 function autoResizeTextarea() {
+  if (!chatInput) return;
   chatInput.style.height = 'auto';
   chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + 'px';
 }
 
 // ---- Clear Chat ----
 function setupClearChat() {
+  if (!clearChat || !chatMessages || !quickSuggestions) return;
+
   clearChat.addEventListener('click', () => {
     chatMessages.innerHTML = '';
     state.chatHistory = [];
@@ -203,11 +171,6 @@ async function sendMessage() {
 
   addUserMessage(text);
 
-  if (!state.apiKey) {
-    addAiMessage('⚠️ Yapay zekayı kullanmak için lütfen önce Google Gemini API anahtarınızı girin. Ücretsiz almak için: <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--primary)">aistudio.google.com/apikey</a>');
-    return;
-  }
-
   state.isLoading = true;
   sendBtn.disabled = true;
 
@@ -224,7 +187,9 @@ async function sendMessage() {
     let errMsg = `❌ Hata: <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:0.8rem;">${msg}</code>`;
 
     if (msg.startsWith('INVALID_KEY') || msg.startsWith('FORBIDDEN')) {
-      errMsg = '❌ API anahtarı geçersiz veya bu proje için Gemini API aktif değil. <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--primary);">Yeni key al</a>';
+      errMsg = '❌ Sunucu tarafındaki Gemini yapılandırması geçersiz veya erişim engellenmiş görünüyor.';
+    } else if (msg.startsWith('MISSING_SERVER_API_KEY')) {
+      errMsg = '⚠️ Sunucuda `GEMINI_API_KEY` tanımlı değil. `.env` dosyasını doldurup sunucuyu yeniden başlatın.';
     } else if (msg.startsWith('RATE_LIMIT')) {
       addAiMessage('⚠️ Dakika limiti doldu. Lütfen <strong>1 dakika</strong> bekleyip tekrar deneyin. Google ücretsiz API\'sinde dakikada 15 istek sınırı var.');
       startRateCountdown();
@@ -337,14 +302,14 @@ async function callGeminiAPI(userMessage) {
   const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash-001', 'gemini-2.0-flash'];
   let res;
   try {
-    for (const model of MODELS) {
-      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (res.status !== 404) break;
-    }
+    res = await fetch('/api/ai/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        models: MODELS,
+        payload,
+      }),
+    });
   } catch (networkErr) {
     throw new Error('NETWORK: ' + networkErr.message);
   }
@@ -352,6 +317,8 @@ async function callGeminiAPI(userMessage) {
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
     const rawMsg = errData?.error?.message || `HTTP ${res.status}`;
+    const rawCode = errData?.error?.code || '';
+    if (rawCode === 'MISSING_SERVER_API_KEY') throw new Error('MISSING_SERVER_API_KEY: ' + rawMsg);
     if (res.status === 400) throw new Error('INVALID_KEY: ' + rawMsg);
     if (res.status === 429) throw new Error('RATE_LIMIT: ' + rawMsg);
     if (res.status === 403) throw new Error('FORBIDDEN: ' + rawMsg);
@@ -394,6 +361,7 @@ KURALLAR: Türkçe, net, öğrenci seviyesine uygun. Markdown kullan. ${levelMap
 
 // ---- UI Helpers ----
 function addUserMessage(text) {
+  if (!chatMessages) return;
   const time = getTime();
   const el = document.createElement('div');
   el.className = 'chat-message user-message';
@@ -411,6 +379,7 @@ function addUserMessage(text) {
 }
 
 function addAiMessage(text, isMarkdown = false) {
+  if (!chatMessages) return;
   const time = getTime();
   const el = document.createElement('div');
   el.className = 'chat-message ai-message';
@@ -437,6 +406,7 @@ function addAiMessage(text, isMarkdown = false) {
 }
 
 function addTypingIndicator() {
+  if (!chatMessages) return null;
   const id = 'typing-' + Date.now();
   const svgId = 'tsvg' + Date.now();
   const el = document.createElement('div');
@@ -464,11 +434,15 @@ function addTypingIndicator() {
 }
 
 function removeTypingIndicator(id) {
-  document.getElementById(id)?.remove();
+  if (id) {
+    document.getElementById(id)?.remove();
+  }
 }
 
 function scrollToBottom() {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  if (chatMessages) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
 }
 
 function getTime() {

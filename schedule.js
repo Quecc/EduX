@@ -1,484 +1,2056 @@
-// schedule.js - Smart Schedule Core Logic
-
-const CURRICULUM = {
-  primary: [
-    { type: 'math', name: 'Matematik', topics: ['Doğal Sayılar', 'Kesirler', 'Geometri', 'Zaman Ölçme'] },
-    { type: 'science', name: 'Fen Bilimleri', topics: ['Kuvvet', 'Maddenin Halleri', 'Gezegenimizi Tanıyalım'] },
-    { type: 'language', name: 'Türkçe', topics: ['Okuma Anlama', 'Sözcükte Anlam', 'Yazım Kuralları'] }
-  ],
-  highschool: [
-    { type: 'math', name: 'Matematik', topics: ['Türev', 'İntegral', 'Trigonometri', 'Fonksiyonlar', 'Logaritma'] },
-    { type: 'science', name: 'Fizik', topics: ['Mekanik', 'Elektrik', 'Manyetizma', 'Dalga Mekaniği'] },
-    { type: 'science', name: 'Kimya', topics: ['Organik Kimya', 'Gazlar', 'Modern Atom Teorisi'] },
-    { type: 'language', name: 'Türkçe / Edebiyat', topics: ['Paragraf', 'Cümle Anlamı', 'Divan Edebiyatı', 'Tanzimat'] }
-  ]
+const PLANNER_VERSION = 2;
+const STORAGE_KEY = 'edux_task_planner_v2';
+const DAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+const BLOCKS = [
+  { id: 'morning', label: 'Sabah', window: '08:00 - 12:00', description: 'Yeni konu, net zihin isteyen işler ve ilk odak bloğu.' },
+  { id: 'afternoon', label: 'Öğle', window: '12:00 - 17:00', description: 'Soru çözümü, branş denemesi ve hız çalışmaları.' },
+  { id: 'evening', label: 'Akşam', window: '17:00 - 23:00', description: 'Tekrar, analiz, kapanış ve telafi görevleri.' },
+];
+const STATUS_ORDER = ['todo', 'partial', 'done'];
+const STATUS_META = {
+  todo: { label: 'Yapılmadı', short: 'Gri', emoji: '⚪' },
+  partial: { label: 'Yarım Kaldı', short: 'Sarı', emoji: '🟡' },
+  done: { label: 'Tamamlandı', short: 'Yeşil', emoji: '🟢' },
 };
-
-const TEMPLATES = [
+const ACTIVITY_TYPES = {
+  topic: {
+    label: 'Konu Çalışması',
+    description: 'İlk öğrenme veya eksik kapatma',
+    icon: '📖',
+    defaultGoalType: 'duration',
+  },
+  practice: {
+    label: 'Soru Çözümü',
+    description: 'Pratik ve soru seti',
+    icon: '📝',
+    defaultGoalType: 'questions',
+  },
+  exam: {
+    label: 'Deneme Sınavı',
+    description: 'Genel veya branş denemesi',
+    icon: '🎯',
+    defaultGoalType: 'exams',
+  },
+  review: {
+    label: 'Tekrar',
+    description: 'Unutmayı engelleyen pekiştirme',
+    icon: '🔄',
+    defaultGoalType: 'duration',
+  },
+};
+const GOAL_TYPE_LABELS = {
+  duration: 'Saat',
+  questions: 'Soru',
+  exams: 'Deneme',
+};
+const CURRICULUM = {
+  TYT: [
+    {
+      name: 'Matematik',
+      type: 'math',
+      topics: ['Temel Kavramlar', 'Sayı Basamakları', 'Bölme ve Bölünebilme', 'EBOB - EKOK', 'Rasyonel Sayılar', 'Basit Eşitsizlikler', 'Mutlak Değer', 'Problemler', 'Kümeler', 'Fonksiyonlar'],
+    },
+    {
+      name: 'Türkçe',
+      type: 'language',
+      topics: ['Sözcükte Anlam', 'Cümlede Anlam', 'Paragraf', 'Ses Bilgisi', 'Yazım Kuralları', 'Noktalama İşaretleri', 'Sözcük Türleri', 'Fiilde Çatı', 'Cümlenin Öğeleri', 'Anlatım Bozukluğu'],
+    },
+    {
+      name: 'Geometri',
+      type: 'math',
+      topics: ['Doğruda Açılar', 'Üçgenler', 'Dörtgenler', 'Çokgenler', 'Çember ve Daire', 'Katı Cisimler', 'Analitik Geometri', 'Yamuk ve Deltoid'],
+    },
+    {
+      name: 'Fizik',
+      type: 'science',
+      topics: ['Fizik Bilimine Giriş', 'Madde ve Özellikleri', 'Hareket ve Kuvvet', 'İş Güç Enerji', 'Isı Sıcaklık Genleşme', 'Basınç', 'Kaldırma Kuvveti', 'Dalgalar ve Optik', 'Elektrik ve Manyetizma'],
+    },
+    {
+      name: 'Kimya',
+      type: 'science',
+      topics: ['Kimya Bilimi', 'Atom ve Periyodik Sistem', 'Kimyasal Türler Arası Etkileşimler', 'Mol Kavramı', 'Kimyasal Tepkimeler', 'Karışımlar', 'Asit Baz Tuz', 'Kimya Her Yerde'],
+    },
+    {
+      name: 'Biyoloji',
+      type: 'science',
+      topics: ['Canlıların Ortak Özellikleri', 'Hücre', 'Canlıların Sınıflandırılması', 'Madde Geçişleri', 'Canlılarda Enerji Dönüşümleri', 'Ekosistem Ekolojisi', 'Kalıtım', 'İnsan Fizyolojisine Giriş'],
+    },
+    {
+      name: 'Tarih',
+      type: 'social',
+      topics: ['Tarih ve Zaman', 'İlk Uygarlıklar', 'İslamiyet Öncesi Türk Tarihi', 'İlk Türk İslam Devletleri', 'Osmanlı Kuruluş', 'Kurtuluş Savaşı', 'Atatürk İlke ve İnkılapları'],
+    },
+    {
+      name: 'Coğrafya',
+      type: 'social',
+      topics: ['Doğa ve İnsan', 'Dünya Şekli ve Hareketleri', 'Harita Bilgisi', 'Atmosfer ve İklim', 'Nüfus', 'Yer Şekilleri', 'Türkiye’nin Coğrafi Konumu', 'Doğal Afetler'],
+    },
+    {
+      name: 'Felsefe',
+      type: 'social',
+      topics: ['Felsefeyi Tanıma', 'Bilgi Felsefesi', 'Varlık Felsefesi', 'Ahlak Felsefesi', 'Siyaset Felsefesi', 'Din Felsefesi'],
+    },
+    {
+      name: 'Din Kültürü',
+      type: 'social',
+      topics: ['Bilgi ve İnanç', 'İslam’da İbadet', 'Ahlak ve Değerler', 'Hz. Muhammed', 'Vahiy ve Akıl', 'İslam Düşüncesi'],
+    },
+  ],
+  AYT: [
+    {
+      name: 'Matematik',
+      type: 'math',
+      topics: ['Fonksiyonlar', 'Polinomlar', 'İkinci Dereceden Denklemler', 'Trigonometri', 'Karmaşık Sayılar', 'Logaritma', 'Diziler', 'Limit', 'Türev', 'İntegral'],
+    },
+    {
+      name: 'Geometri',
+      type: 'math',
+      topics: ['Doğrunun Analitiği', 'Dönüşüm Geometrisi', 'Çemberin Analitiği', 'Katı Cisimler', 'Vektörler', 'Çokgenlerde Alan'],
+    },
+    {
+      name: 'Fizik',
+      type: 'science',
+      topics: ['Vektörler', 'Kuvvet Tork Denge', 'Elektriksel Kuvvet ve Alan', 'Manyetizma', 'Basit Harmonik Hareket', 'Dalga Mekaniği', 'Modern Fizik', 'Atom Fiziği'],
+    },
+    {
+      name: 'Kimya',
+      type: 'science',
+      topics: ['Modern Atom Teorisi', 'Gazlar', 'Sıvı Çözeltiler', 'Kimyasal Denge', 'Asit Baz Dengesi', 'Çözünürlük Dengesi', 'Elektrokimya', 'Organik Kimya'],
+    },
+    {
+      name: 'Biyoloji',
+      type: 'science',
+      topics: ['Sinir Sistemi', 'Endokrin Sistem', 'Duyu Organları', 'Destek ve Hareket Sistemi', 'Sindirim Sistemi', 'Dolaşım ve Bağışıklık', 'Solunum Sistemi', 'Bitki Biyolojisi', 'Komünite ve Popülasyon'],
+    },
+    {
+      name: 'Edebiyat',
+      type: 'language',
+      topics: ['Şiir Bilgisi', 'İslamiyet Öncesi Türk Edebiyatı', 'Halk Edebiyatı', 'Divan Edebiyatı', 'Tanzimat Edebiyatı', 'Servetifünun', 'Milli Edebiyat', 'Cumhuriyet Dönemi'],
+    },
+    {
+      name: 'Tarih-1',
+      type: 'social',
+      topics: ['Türklerde Devlet Teşkilatı', 'Osmanlı Siyasi Tarihi', '17. ve 18. Yüzyıl Islahatları', '19. Yüzyılda Değişim', 'Milli Mücadele', 'Atatürkçülük'],
+    },
+    {
+      name: 'Coğrafya-1',
+      type: 'social',
+      topics: ['Doğal Sistemler', 'Beşeri Sistemler', 'Küresel Ortam', 'Türkiye Ekonomisi', 'Bölgeler ve Ülkeler'],
+    },
+    {
+      name: 'Tarih-2',
+      type: 'social',
+      topics: ['20. Yüzyıl Başlarında Dünya', 'II. Dünya Savaşı', 'Soğuk Savaş Dönemi', 'Türk Dış Politikası', 'Çağdaş Türk ve Dünya'],
+    },
+    {
+      name: 'Coğrafya-2',
+      type: 'social',
+      topics: ['Ekosistem ve Madde Döngüsü', 'Biyoçeşitlilik', 'Nüfus Politikaları', 'Şehirleşme', 'Ulaşım ve Ticaret', 'Enerji Kaynakları'],
+    },
+    {
+      name: 'Felsefe Grubu',
+      type: 'social',
+      topics: ['Psikoloji', 'Sosyoloji', 'Mantık', 'Felsefe Sorunları'],
+    },
+    {
+      name: 'Din Kültürü',
+      type: 'social',
+      topics: ['Kur’an’a Göre Hz. Muhammed', 'İnanç Esasları', 'İslam ve Bilim', 'Anadolu’da İslam'],
+    },
+  ],
+};
+const TEMPLATE_LIBRARY = [
   {
-    id: 't1',
-    title: 'Üniversite Hazırlık - Yoğun (SAY)',
-    hours: 32,
-    tags: ['12. Sınıf', 'Mezun', 'SAY', 'Yoğun'],
-    events: [
-      { day: 1, hour: 9, duration: 2, title: 'Matematik', topic: 'Türev', type: 'math' },
-      { day: 1, hour: 11, duration: 2, title: 'Fizik', topic: 'Mekanik', type: 'science' },
-      { day: 2, hour: 10, duration: 2, title: 'Kimya', topic: 'Organik Kimya', type: 'science' },
-      { day: 3, hour: 15, duration: 2, title: 'Matematik', topic: 'İntegral', type: 'math' }
-    ]
+    id: 'ea-baslangic',
+    title: 'Sıfırdan Başlayan Eşit Ağırlıkçı',
+    audience: 'ea',
+    hours: 18,
+    tags: ['EA', 'Yeni Başlayan', 'Dengeli'],
+    description: 'Temel TYT ağırlığını korurken AYT Edebiyat ve Matematikle ritim kuran hafif ama sürdürülebilir başlangıç haftası.',
+    slots: [
+      { dayIndex: 0, block: 'morning', track: 'TYT', subject: 'Matematik', topic: 'Temel Kavramlar', activityType: 'topic', goalType: 'duration', goalValue: 2 },
+      { dayIndex: 0, block: 'evening', track: 'TYT', subject: 'Türkçe', topic: 'Paragraf', activityType: 'practice', goalType: 'questions', goalValue: 40 },
+      { dayIndex: 1, block: 'afternoon', track: 'AYT', subject: 'Edebiyat', topic: 'Şiir Bilgisi', activityType: 'topic', goalType: 'duration', goalValue: 2 },
+      { dayIndex: 2, block: 'morning', track: 'TYT', subject: 'Geometri', topic: 'Üçgenler', activityType: 'topic', goalType: 'duration', goalValue: 2 },
+      { dayIndex: 2, block: 'evening', track: 'AYT', subject: 'Matematik', topic: 'Fonksiyonlar', activityType: 'practice', goalType: 'questions', goalValue: 35 },
+      { dayIndex: 4, block: 'afternoon', track: 'TYT', subject: 'Tarih', topic: 'Kurtuluş Savaşı', activityType: 'review', goalType: 'duration', goalValue: 1 },
+      { dayIndex: 5, block: 'morning', track: 'TYT', subject: 'Matematik', topic: 'Problemler', activityType: 'practice', goalType: 'questions', goalValue: 50 },
+      { dayIndex: 6, block: 'evening', track: 'TYT', subject: 'Genel Deneme', topic: 'TYT Mini Deneme', activityType: 'exam', goalType: 'exams', goalValue: 1 },
+    ],
   },
   {
-    id: 't2',
-    title: 'Düzenli Okul Tekrarı (EA)',
-    hours: 15,
-    tags: ['10. Sınıf', '11. Sınıf', 'EA', 'Orta'],
-    events: [
-      { day: 2, hour: 16, duration: 2, title: 'Matematik', topic: 'Trigonometri', type: 'math' },
-      { day: 4, hour: 17, duration: 2, title: 'Türkçe', topic: 'Paragraf', type: 'language' }
-    ]
-  }
+    id: 'say-mezun',
+    title: 'Mezuna Kalan Sayısalcı',
+    audience: 'say',
+    hours: 30,
+    tags: ['SAY', 'Mezun', 'Yoğun'],
+    description: 'AYT fen ve matematik yükünü yüksek tutarken haftaya yayılmış TYT soru disiplini ve deneme ritmi kurar.',
+    slots: [
+      { dayIndex: 0, block: 'morning', track: 'AYT', subject: 'Matematik', topic: 'Türev', activityType: 'topic', goalType: 'duration', goalValue: 3 },
+      { dayIndex: 0, block: 'afternoon', track: 'AYT', subject: 'Fizik', topic: 'Manyetizma', activityType: 'topic', goalType: 'duration', goalValue: 2 },
+      { dayIndex: 1, block: 'morning', track: 'TYT', subject: 'Türkçe', topic: 'Paragraf', activityType: 'practice', goalType: 'questions', goalValue: 60 },
+      { dayIndex: 1, block: 'evening', track: 'AYT', subject: 'Kimya', topic: 'Organik Kimya', activityType: 'topic', goalType: 'duration', goalValue: 2 },
+      { dayIndex: 2, block: 'morning', track: 'AYT', subject: 'Biyoloji', topic: 'Sinir Sistemi', activityType: 'topic', goalType: 'duration', goalValue: 2 },
+      { dayIndex: 2, block: 'afternoon', track: 'AYT', subject: 'Matematik', topic: 'İntegral', activityType: 'practice', goalType: 'questions', goalValue: 45 },
+      { dayIndex: 3, block: 'evening', track: 'TYT', subject: 'Geometri', topic: 'Çember ve Daire', activityType: 'practice', goalType: 'questions', goalValue: 30 },
+      { dayIndex: 4, block: 'morning', track: 'AYT', subject: 'Fizik', topic: 'Modern Fizik', activityType: 'practice', goalType: 'questions', goalValue: 35 },
+      { dayIndex: 4, block: 'afternoon', track: 'AYT', subject: 'Kimya', topic: 'Kimyasal Denge', activityType: 'review', goalType: 'duration', goalValue: 1 },
+      { dayIndex: 5, block: 'morning', track: 'TYT', subject: 'Genel Deneme', topic: 'TYT Genel Deneme', activityType: 'exam', goalType: 'exams', goalValue: 1 },
+      { dayIndex: 6, block: 'afternoon', track: 'AYT', subject: 'Genel Deneme', topic: 'AYT Branş Denemesi', activityType: 'exam', goalType: 'exams', goalValue: 1 },
+    ],
+  },
+  {
+    id: 'tyt-son3ay',
+    title: 'Son 3 Ay TYT Kampı',
+    audience: 'tyt',
+    hours: 24,
+    tags: ['TYT', 'Kamp', 'Net Artışı'],
+    description: 'TYT netlerini kısa sürede yukarı taşımak için paragraf, problem, geometri ve fen tekrarını birlikte döndürür.',
+    slots: [
+      { dayIndex: 0, block: 'morning', track: 'TYT', subject: 'Türkçe', topic: 'Paragraf', activityType: 'practice', goalType: 'questions', goalValue: 50 },
+      { dayIndex: 0, block: 'evening', track: 'TYT', subject: 'Matematik', topic: 'Problemler', activityType: 'practice', goalType: 'questions', goalValue: 45 },
+      { dayIndex: 1, block: 'afternoon', track: 'TYT', subject: 'Geometri', topic: 'Üçgenler', activityType: 'topic', goalType: 'duration', goalValue: 2 },
+      { dayIndex: 2, block: 'morning', track: 'TYT', subject: 'Fizik', topic: 'Basınç', activityType: 'topic', goalType: 'duration', goalValue: 1 },
+      { dayIndex: 2, block: 'evening', track: 'TYT', subject: 'Kimya', topic: 'Mol Kavramı', activityType: 'practice', goalType: 'questions', goalValue: 25 },
+      { dayIndex: 3, block: 'afternoon', track: 'TYT', subject: 'Biyoloji', topic: 'Hücre', activityType: 'review', goalType: 'duration', goalValue: 1 },
+      { dayIndex: 4, block: 'morning', track: 'TYT', subject: 'Matematik', topic: 'Temel Kavramlar', activityType: 'review', goalType: 'duration', goalValue: 1 },
+      { dayIndex: 5, block: 'morning', track: 'TYT', subject: 'Genel Deneme', topic: 'TYT Tam Deneme', activityType: 'exam', goalType: 'exams', goalValue: 1 },
+      { dayIndex: 6, block: 'evening', track: 'TYT', subject: 'Türkçe', topic: 'Anlatım Bozukluğu', activityType: 'review', goalType: 'duration', goalValue: 1 },
+    ],
+  },
+  {
+    id: 'denge-tekrar',
+    title: 'Denge + Telafi Haftası',
+    audience: 'balanced',
+    hours: 16,
+    tags: ['Telafi', 'Tekrar', 'Dengeli'],
+    description: 'Eksik havuzunu eritmek, tamamlanmış konuları unutmamak ve haftayı daha sakin ama kontrollü geçirmek için.',
+    slots: [
+      { dayIndex: 0, block: 'evening', track: 'TYT', subject: 'Matematik', topic: 'Mutlak Değer', activityType: 'review', goalType: 'duration', goalValue: 1 },
+      { dayIndex: 1, block: 'morning', track: 'TYT', subject: 'Türkçe', topic: 'Sözcükte Anlam', activityType: 'review', goalType: 'duration', goalValue: 1 },
+      { dayIndex: 2, block: 'afternoon', track: 'AYT', subject: 'Matematik', topic: 'Logaritma', activityType: 'practice', goalType: 'questions', goalValue: 25 },
+      { dayIndex: 3, block: 'evening', track: 'AYT', subject: 'Fizik', topic: 'Dalga Mekaniği', activityType: 'review', goalType: 'duration', goalValue: 1 },
+      { dayIndex: 4, block: 'afternoon', track: 'TYT', subject: 'Coğrafya', topic: 'Harita Bilgisi', activityType: 'review', goalType: 'duration', goalValue: 1 },
+      { dayIndex: 5, block: 'morning', track: 'TYT', subject: 'Genel Deneme', topic: 'Branş Denemesi Paketi', activityType: 'exam', goalType: 'exams', goalValue: 1 },
+      { dayIndex: 6, block: 'evening', track: 'AYT', subject: 'Edebiyat', topic: 'Cumhuriyet Dönemi', activityType: 'review', goalType: 'duration', goalValue: 1 },
+    ],
+  },
 ];
 
-document.addEventListener('DOMContentLoaded', () => {
-  // 1. Inject Dynamic Modals
-  injectModals();
+const dom = {};
+const state = {
+  currentUser: null,
+  userLevel: '',
+  userTrack: 'mixed',
+  isHighSchoolCategory: true,
+  tasks: [],
+  meta: {
+    version: PLANNER_VERSION,
+    hasStarted: false,
+    weekOffset: 0,
+    lastCarryoverRun: null,
+    aiCoachNote: '',
+    showAllSubjects: false,
+  },
+  templateFilter: 'all',
+  dragTaskId: null,
+  saveTimer: null,
+};
 
-  // Elements
-  const bodyArea = document.getElementById('bodyArea');
-  const analyzeBtn = document.getElementById('analyzeBtn');
-  const scheduleEmpty = document.getElementById('scheduleEmpty');
-  const calendarWrapper = document.getElementById('calendarWrapper');
-  const calendarGrid = document.getElementById('calendarGrid');
-  const btnSelectTemplate = document.getElementById('btnSelectTemplate');
+document.addEventListener('DOMContentLoaded', initPlanner);
 
-  const drawerOverlay = document.getElementById('drawerOverlay');
-  const templateDrawer = document.getElementById('templateDrawer');
+function initPlanner() {
+  cacheDom();
+  injectPlannerModals();
+  bindStaticEvents();
 
-  // State
-  let userLevel = '';
-  let isHighSchoolCategory = false;
-  let events = []; // Array of { id, day, hour, duration, title, topic, type, aiNote }
-  let draggedEventId = null;
-
-  // New Event State
-  let selectedCellDay = null;
-  let selectedCellHour = null;
-  let selectedCurriculumType = 'math';
-  let selectedCurriculumTitle = 'Matematik';
-
-  // Auth Listener
   if (window.firebase && firebase.auth) {
     firebase.auth().onAuthStateChanged(async (user) => {
-      if (user) {
-        try {
-          const doc = await db.collection('users').doc(user.uid).get();
-          if (doc.exists) {
-            userLevel = doc.data().level || '';
-            applyThemeBasedOnLevel(userLevel);
-            // Load custom schedule if exists
-            const scheduleDoc = await db.collection('users').doc(user.uid).collection('data').doc('schedule').get();
-            if (scheduleDoc.exists && scheduleDoc.data().events) {
-              events = scheduleDoc.data().events;
-            }
-            renderUI();
-          }
-        } catch (e) { console.error("Firebase fetch error", e); renderUI(); }
-      } else {
-        // Logged out
-        calendarWrapper.style.display = 'none';
-        scheduleEmpty.style.display = 'flex';
-        analyzeBtn.style.display = 'none';
-      }
+      state.currentUser = user || null;
+      await hydratePlanner();
     });
   } else {
-    // Fallback for dev without firebase
-    applyThemeBasedOnLevel('12. Sınıf');
-    renderUI();
+    hydratePlanner();
+  }
+}
+
+function cacheDom() {
+  dom.bodyArea = document.getElementById('bodyArea');
+  dom.scheduleEmpty = document.getElementById('scheduleEmpty');
+  dom.plannerInitialLoader = document.getElementById('plannerInitialLoader');
+  dom.plannerShell = document.getElementById('plannerShell');
+  dom.analyzeBtn = document.getElementById('analyzeBtn');
+  dom.prevWeekBtn = document.getElementById('prevWeekBtn');
+  dom.nextWeekBtn = document.getElementById('nextWeekBtn');
+  dom.currentWeekBtn = document.getElementById('currentWeekBtn');
+  dom.weekLabel = document.getElementById('weekLabel');
+  dom.btnCreateBlank = document.getElementById('btnCreateBlank');
+  dom.btnSelectTemplate = document.getElementById('btnSelectTemplate');
+  dom.btnAiPlan = document.getElementById('btnAiPlan');
+  dom.plannerSummary = document.getElementById('plannerSummary');
+  dom.coachInsights = document.getElementById('coachInsights');
+  dom.weekProgressCard = document.getElementById('weekProgressCard');
+  dom.carryoverList = document.getElementById('carryoverList');
+  dom.plannerBoard = document.getElementById('plannerBoard');
+  dom.subjectProgressGrid = document.getElementById('subjectProgressGrid');
+  dom.trackPreferenceSelect = document.getElementById('trackPreferenceSelect');
+  dom.toggleAllSubjectsBtn = document.getElementById('toggleAllSubjectsBtn');
+  dom.drawerOverlay = document.getElementById('drawerOverlay');
+  dom.templateDrawer = document.getElementById('templateDrawer');
+  dom.templateFilters = document.getElementById('templateFilters');
+  dom.templateList = document.getElementById('templateList');
+  dom.closeTemplateDrawer = document.getElementById('closeTemplateDrawer');
+  dom.analyzeDrawer = document.getElementById('analyzeDrawer');
+  dom.analyzeContent = document.getElementById('analyzeContent');
+  dom.closeAnalyzeDrawer = document.getElementById('closeAnalyzeDrawer');
+}
+
+function injectPlannerModals() {
+  const modalsHtml = `
+    <div class="auth-modal" id="taskModal">
+      <div class="auth-modal-overlay" data-close-modal="taskModal"></div>
+      <div class="auth-modal-card auth-modal-card--wide">
+        <button class="auth-modal-x" data-close-modal="taskModal">×</button>
+        <div class="auth-modal-header">
+          <div class="auth-modal-logo">🧩</div>
+          <div>
+            <h2 id="taskModalTitle">Yeni Görev</h2>
+            <p id="taskModalSubtitle">Zaman bloğunu dolduran işi belirle; saat değil hedef tanımla.</p>
+          </div>
+        </div>
+        <form id="taskForm">
+          <input type="hidden" id="taskIdInput" />
+          <input type="hidden" id="taskActivityTypeInput" value="topic" />
+          <div class="planner-form-grid">
+            <div class="planner-form-group full">
+              <label>Ne yapacaksın?</label>
+              <div class="choice-grid" id="activityChoices">
+                ${Object.entries(ACTIVITY_TYPES).map(([key, item]) => `
+                  <button class="choice-btn ${key === 'topic' ? 'active' : ''}" type="button" data-activity-choice="${key}">
+                    <strong>${item.icon} ${item.label}</strong>
+                    <span>${item.description}</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="planner-form-group">
+              <label for="taskDateSelect">Gün</label>
+              <select id="taskDateSelect"></select>
+            </div>
+
+            <div class="planner-form-group">
+              <label for="taskBlockSelect">Blok</label>
+              <select id="taskBlockSelect">
+                ${BLOCKS.map((block) => `<option value="${block.id}">${block.label}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="planner-form-group">
+              <label for="taskTrackSelect">Alan</label>
+              <select id="taskTrackSelect">
+                <option value="TYT">TYT</option>
+                <option value="AYT">AYT</option>
+              </select>
+            </div>
+
+            <div class="planner-form-group">
+              <label for="taskSubjectSelect">Ders</label>
+              <select id="taskSubjectSelect"></select>
+            </div>
+
+            <div class="planner-form-group full">
+              <div class="helper-row">
+                <label for="taskTopicInput">Konu</label>
+                <label class="helper-inline">
+                  <input type="checkbox" id="taskShowCompletedTopics" />
+                  Tamamlanan konuları da göster
+                </label>
+              </div>
+              <input type="text" id="taskTopicInput" placeholder="Örn: Fonksiyonlar, Paragraf, TYT Genel Deneme" autocomplete="off" />
+              <div class="topic-suggestion-box" id="taskTopicSuggestions"></div>
+            </div>
+
+            <div class="planner-form-group">
+              <label for="taskGoalTypeSelect">Hedef tipi</label>
+              <select id="taskGoalTypeSelect">
+                <option value="duration">Saat</option>
+                <option value="questions">Soru</option>
+                <option value="exams">Deneme</option>
+              </select>
+            </div>
+
+            <div class="planner-form-group">
+              <label for="taskGoalValueInput">Hedef değeri</label>
+              <input type="number" id="taskGoalValueInput" min="1" step="1" value="2" />
+            </div>
+
+            <div class="planner-form-group full">
+              <label for="taskNoteInput">Kısa not</label>
+              <textarea id="taskNoteInput" placeholder="Örn: Önce fasikül özetini oku, sonra 30 orta seviye soru çöz."></textarea>
+              <div class="modal-inline-note">Tamamlanan görevler BearEdu içindeki konu yüzdelerine senkronize edilir.</div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="deleteTaskBtn" style="display:none;">Görevi Sil</button>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <button type="button" class="btn-secondary" data-close-modal="taskModal">Vazgeç</button>
+              <button type="submit" class="btn-primary">Görevi Kaydet</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="auth-modal" id="aiPlanModal">
+      <div class="auth-modal-overlay" data-close-modal="aiPlanModal"></div>
+      <div class="auth-modal-card auth-modal-card--wide">
+        <button class="auth-modal-x" data-close-modal="aiPlanModal">×</button>
+        <div class="auth-modal-header">
+          <div class="auth-modal-logo">✨</div>
+          <div>
+            <h2>Yapay Zeka Haftalık Planlayıcı</h2>
+            <p>Günlük yükünü, eksiklerini ve hedef netini ver; sistem blok bazlı haftanı çıkarsın.</p>
+          </div>
+        </div>
+        <form id="aiPlanForm">
+          <div class="planner-form-grid">
+            <div class="planner-form-group">
+              <label for="aiFocusSelect">Hedef alan</label>
+              <select id="aiFocusSelect">
+                <option value="say">Sayısal</option>
+                <option value="ea">Eşit Ağırlık</option>
+                <option value="soz">Sözel</option>
+                <option value="mixed">Karışık / Genel</option>
+              </select>
+            </div>
+            <div class="planner-form-group">
+              <label for="aiWeeklyHours">Haftalık toplam saat</label>
+              <input type="number" id="aiWeeklyHours" min="4" step="1" value="20" />
+            </div>
+            <div class="planner-form-group">
+              <label for="aiTargetNet">Hedef net</label>
+              <input type="number" id="aiTargetNet" min="10" step="1" value="75" />
+            </div>
+            <div class="planner-form-group">
+              <label for="aiWeakSubjects">En zayıf dersler</label>
+              <input type="text" id="aiWeakSubjects" placeholder="Örn: TYT Matematik, AYT Fizik" />
+            </div>
+            <div class="planner-form-group full">
+              <label>Uygun bloklar</label>
+              <div class="choice-grid" id="aiBlockChoices">
+                ${BLOCKS.map((block) => `
+                  <button class="choice-btn active" type="button" data-ai-block="${block.id}">
+                    <strong>${block.label}</strong>
+                    <span>${block.window}</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+            <div class="planner-form-group full">
+              <label for="aiCurrentTopics">Şu an hangi konulardasın?</label>
+              <textarea id="aiCurrentTopics" placeholder="Örn: TYT matematikte problemler yarım, AYT kimyada organik yeni başladı, paragraf düzenli gidiyor."></textarea>
+            </div>
+            <div class="planner-form-group full">
+              <label for="aiConstraints">Ek notlar</label>
+              <textarea id="aiConstraints" placeholder="Örn: Çarşamba okul geç bitiyor, cumartesi sabah deneme istiyorum, pazar akşam tekrar olsun."></textarea>
+            </div>
+            <div class="planner-form-group full">
+              <label class="helper-inline">
+                <input type="checkbox" id="aiReplaceWeek" checked />
+                Bu haftadaki planı yeniden kur (tamamlanmış görevler korunur)
+              </label>
+            </div>
+          </div>
+          <div id="aiPlanStatus" class="modal-inline-note"></div>
+          <div class="modal-actions">
+            <span class="modal-inline-note">AI planı konu tekrarlarını ve deneme bloklarını dengeli yaymaya çalışır.</span>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <button type="button" class="btn-secondary" data-close-modal="aiPlanModal">Kapat</button>
+              <button type="submit" class="btn-primary">Planı Oluştur</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalsHtml);
+}
+
+function bindStaticEvents() {
+  dom.prevWeekBtn.addEventListener('click', () => changeWeek(-1));
+  dom.nextWeekBtn.addEventListener('click', () => changeWeek(1));
+  dom.currentWeekBtn.addEventListener('click', () => resetWeek());
+  dom.btnCreateBlank?.addEventListener('click', () => startBlankPlanner());
+  dom.btnSelectTemplate?.addEventListener('click', () => openTemplateDrawer());
+  dom.btnAiPlan?.addEventListener('click', () => openAiPlanModal());
+  dom.analyzeBtn.addEventListener('click', () => analyzePlanner());
+  dom.closeTemplateDrawer.addEventListener('click', closeDrawers);
+  dom.closeAnalyzeDrawer.addEventListener('click', closeDrawers);
+  dom.drawerOverlay.addEventListener('click', closeDrawers);
+  dom.templateFilters.addEventListener('click', handleTemplateFilterClick);
+  dom.templateList.addEventListener('click', handleTemplateApplyClick);
+  dom.trackPreferenceSelect.addEventListener('change', handleTrackPreferenceChange);
+  dom.toggleAllSubjectsBtn.addEventListener('click', toggleAllSubjects);
+  dom.plannerBoard.addEventListener('click', handleBoardClick);
+  dom.carryoverList.addEventListener('click', handleBoardClick);
+  dom.plannerBoard.addEventListener('dragstart', handleDragStart);
+  dom.carryoverList.addEventListener('dragstart', handleDragStart);
+  dom.plannerBoard.addEventListener('dragend', handleDragEnd);
+  dom.carryoverList.addEventListener('dragend', handleDragEnd);
+  dom.plannerBoard.addEventListener('dragover', handleDragOver);
+  dom.carryoverList.addEventListener('dragover', handleDragOver);
+  dom.plannerBoard.addEventListener('dragleave', handleDragLeave);
+  dom.carryoverList.addEventListener('dragleave', handleDragLeave);
+  dom.plannerBoard.addEventListener('drop', handleDrop);
+  dom.carryoverList.addEventListener('drop', handleDrop);
+
+  document.querySelectorAll('[data-action="create-blank"]').forEach((button) => {
+    button.addEventListener('click', () => startBlankPlanner());
+  });
+  document.querySelectorAll('[data-action="open-template"]').forEach((button) => {
+    button.addEventListener('click', () => openTemplateDrawer());
+  });
+  document.querySelectorAll('[data-action="open-ai"]').forEach((button) => {
+    button.addEventListener('click', () => openAiPlanModal());
+  });
+
+  document.addEventListener('click', (event) => {
+    const closeTarget = event.target.closest('[data-close-modal]');
+    if (!closeTarget) return;
+    closeModal(closeTarget.getAttribute('data-close-modal'));
+  });
+
+  document.getElementById('activityChoices').addEventListener('click', handleActivityChoiceClick);
+  document.getElementById('taskTrackSelect').addEventListener('change', () => {
+    renderTaskSubjectOptions();
+    renderTopicSuggestions();
+  });
+  document.getElementById('taskSubjectSelect').addEventListener('change', renderTopicSuggestions);
+  document.getElementById('taskTopicInput').addEventListener('input', renderTopicSuggestions);
+  document.getElementById('taskShowCompletedTopics').addEventListener('change', renderTopicSuggestions);
+  document.getElementById('taskGoalTypeSelect').addEventListener('change', syncGoalValueField);
+  document.getElementById('taskDateSelect').addEventListener('change', syncTaskPlacementState);
+  document.getElementById('deleteTaskBtn').addEventListener('click', deleteEditingTask);
+  document.getElementById('taskForm').addEventListener('submit', submitTaskForm);
+
+  document.getElementById('taskTopicSuggestions').addEventListener('click', (event) => {
+    const suggestion = event.target.closest('[data-topic]');
+    if (!suggestion) return;
+    document.getElementById('taskTopicInput').value = suggestion.getAttribute('data-topic');
+    renderTopicSuggestions();
+  });
+
+  document.getElementById('aiBlockChoices').addEventListener('click', (event) => {
+    const button = event.target.closest('[data-ai-block]');
+    if (!button) return;
+    button.classList.toggle('active');
+  });
+  document.getElementById('aiPlanForm').addEventListener('submit', submitAiPlanForm);
+}
+
+async function hydratePlanner() {
+  const userProfile = await loadUserProfile();
+  state.userLevel = userProfile.level;
+  state.userTrack = userProfile.track;
+  applyThemeBasedOnLevel(state.userLevel);
+
+  const persisted = await loadPersistedPlanner();
+  const normalized = normalizePlannerState(persisted);
+  state.tasks = normalized.tasks;
+  state.meta = normalized.meta;
+
+  const carryoverChanged = runCarryoverSweep();
+  renderPlanner();
+
+  if (normalized.needsMigration || carryoverChanged) {
+    queuePlannerSave(true);
+  }
+}
+
+async function loadUserProfile() {
+  if (!(state.currentUser && typeof db !== 'undefined' && db)) {
+    return { level: 'lise', track: 'mixed' };
   }
 
-  function applyThemeBasedOnLevel(level) {
-    const hsLevels = ['9', '10', '11', '12', 'mezun', 'lise'];
-    isHighSchoolCategory = hsLevels.some(l => level.toLowerCase().includes(l));
+  try {
+    const userDoc = await db.collection('users').doc(state.currentUser.uid).get();
+    if (userDoc.exists) {
+      return {
+        level: userDoc.data().level || 'lise',
+        track: normalizeTrackPreference(userDoc.data().track),
+      };
+    }
+  } catch (error) {
+    console.error('Kullanıcı seviyesi okunamadı:', error);
+  }
 
-    if (isHighSchoolCategory) {
-      bodyArea.classList.add('theme-highschool');
-      bodyArea.classList.remove('theme-primary');
-      if (btnSelectTemplate) btnSelectTemplate.style.display = 'inline-block';
-    } else {
-      bodyArea.classList.add('theme-primary');
-      bodyArea.classList.remove('theme-highschool');
-      if (btnSelectTemplate) btnSelectTemplate.style.display = 'none';
+  return { level: 'lise', track: 'mixed' };
+}
+
+async function loadPersistedPlanner() {
+  if (state.currentUser && typeof db !== 'undefined' && db) {
+    try {
+      const scheduleDoc = await db.collection('users').doc(state.currentUser.uid).collection('data').doc('schedule').get();
+      if (scheduleDoc.exists) {
+        return scheduleDoc.data();
+      }
+    } catch (error) {
+      console.error('Bulut planı okunamadı:', error);
     }
   }
 
-  function renderUI() {
-    if (events.length === 0) {
-      calendarWrapper.style.display = 'none';
-      scheduleEmpty.style.display = 'flex';
-      analyzeBtn.style.display = 'none';
-    } else {
-      scheduleEmpty.style.display = 'none';
-      calendarWrapper.style.display = 'block';
-      analyzeBtn.style.display = 'flex';
-      drawGrid();
-      renderEvents();
-    }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.error('Yerel plan okunamadı:', error);
+    return null;
+  }
+}
+
+function normalizePlannerState(raw) {
+  const defaultMeta = {
+    version: PLANNER_VERSION,
+    hasStarted: false,
+    weekOffset: 0,
+    lastCarryoverRun: null,
+    aiCoachNote: '',
+  };
+
+  let tasks = [];
+  let needsMigration = false;
+
+  if (Array.isArray(raw?.tasks)) {
+    tasks = raw.tasks.map(normalizeTask).filter(Boolean);
+  } else if (Array.isArray(raw?.events)) {
+    tasks = migrateLegacyEvents(raw.events);
+    needsMigration = true;
+  } else if (Array.isArray(raw?.data?.events)) {
+    tasks = migrateLegacyEvents(raw.data.events);
+    needsMigration = true;
   }
 
-  // --- Grid & Calendar Logic ---
-  function drawGrid() {
-    calendarGrid.innerHTML = '';
-    const days = ['Saat', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+  const meta = { ...defaultMeta, ...(raw?.meta || {}) };
+  if ((raw?.version || PLANNER_VERSION) !== PLANNER_VERSION) {
+    needsMigration = true;
+  }
+  if (tasks.length > 0) {
+    meta.hasStarted = true;
+  }
 
-    // Header
-    days.forEach(day => {
-      const div = document.createElement('div');
-      div.className = 'cal-header';
-      div.textContent = day;
-      calendarGrid.appendChild(div);
+  return { tasks, meta, needsMigration };
+}
+
+function migrateLegacyEvents(events) {
+  const weekDates = getWeekDates(0);
+  return events.map((event) => {
+    const block = inferBlockFromHour(event.hour);
+    const dayIndex = Math.max(0, Math.min(6, (Number(event.day) || 1) - 1));
+    return normalizeTask({
+      id: createId('legacy'),
+      date: weekDates[dayIndex]?.key || formatDateKey(new Date()),
+      block,
+      track: inferTrackFromSubject(event.title),
+      subject: event.title || 'Serbest Çalışma',
+      topic: event.topic || event.title || 'Serbest Çalışma',
+      activityType: event.aiNote ? 'topic' : 'practice',
+      goalType: 'duration',
+      goalValue: Math.max(1, Number(event.duration) || 1),
+      status: 'todo',
+      note: event.aiNote || '',
+      source: 'legacy',
     });
+  });
+}
 
-    // Body
-    for (let h = 8; h <= 23; h++) {
-      const timeDiv = document.createElement('div');
-      timeDiv.className = 'cal-time';
-      timeDiv.textContent = `${h.toString().padStart(2, '0')}:00`;
-      calendarGrid.appendChild(timeDiv);
+function inferBlockFromHour(hour) {
+  const value = Number(hour) || 9;
+  if (value < 12) return 'morning';
+  if (value < 17) return 'afternoon';
+  return 'evening';
+}
 
-      for (let d = 1; d <= 7; d++) {
-        const cell = document.createElement('div');
-        cell.className = 'cal-cell';
-        cell.dataset.day = d;
-        cell.dataset.hour = h;
+function inferTrackFromSubject(subject) {
+  const value = (subject || '').toLowerCase();
+  if (['edebiyat', 'tarih-1', 'coğrafya-1', 'tarih-2', 'coğrafya-2'].some((item) => value.includes(item.toLowerCase()))) {
+    return 'AYT';
+  }
+  return 'TYT';
+}
 
-        // Grid Placement via CSS inline (Row: h-7+1, Col: d+1)
-        cell.style.gridColumn = d + 1;
-        cell.style.gridRow = (h - 7) + 1;
+function normalizeTask(rawTask) {
+  if (!rawTask) return null;
 
-        // Interactions
-        cell.addEventListener('click', () => openAddEventModal(d, h));
+  const activityType = ACTIVITY_TYPES[rawTask.activityType] ? rawTask.activityType : 'topic';
+  const goalType = GOAL_TYPE_LABELS[rawTask.goalType] ? rawTask.goalType : ACTIVITY_TYPES[activityType].defaultGoalType;
+  const dateValue = rawTask.date || null;
+  const subject = rawTask.subject || 'Serbest Çalışma';
 
-        // Drag over
-        cell.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          cell.classList.add('drag-over');
-        });
-        cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
-        cell.addEventListener('drop', (e) => {
-          e.preventDefault();
-          cell.classList.remove('drag-over');
-          if (draggedEventId) {
-            moveEvent(draggedEventId, d, h);
-          }
-        });
+  return {
+    id: rawTask.id || createId('task'),
+    date: dateValue,
+    block: dateValue ? rawTask.block || 'morning' : 'pool',
+    track: rawTask.track || 'TYT',
+    subject,
+    topic: rawTask.topic || subject,
+    activityType,
+    goalType,
+    goalValue: Math.max(1, Number(rawTask.goalValue) || 1),
+    status: STATUS_META[rawTask.status] ? rawTask.status : 'todo',
+    note: rawTask.note || '',
+    aiNote: rawTask.aiNote || '',
+    isCarryover: Boolean(rawTask.isCarryover),
+    carriedFromDate: rawTask.carriedFromDate || '',
+    source: rawTask.source || 'manual',
+    order: Number(rawTask.order) || Number(rawTask.createdAt) || Date.now(),
+    createdAt: Number(rawTask.createdAt) || Date.now(),
+    updatedAt: Number(rawTask.updatedAt) || Date.now(),
+  };
+}
 
-        calendarGrid.appendChild(cell);
-      }
+function applyThemeBasedOnLevel(level) {
+  const normalized = (level || '').toLowerCase();
+  const primaryKeywords = ['ilkokul', 'ortaokul'];
+  state.isHighSchoolCategory = !primaryKeywords.some((keyword) => normalized.includes(keyword));
+
+  dom.bodyArea.classList.toggle('theme-highschool', state.isHighSchoolCategory);
+  dom.bodyArea.classList.toggle('theme-primary', !state.isHighSchoolCategory);
+}
+
+function runCarryoverSweep() {
+  const todayKey = formatDateKey(new Date());
+  let changed = false;
+
+  state.tasks = state.tasks.map((task) => {
+    if (task.date && task.date < todayKey && task.status !== 'done') {
+      changed = true;
+      return normalizeTask({
+        ...task,
+        date: null,
+        block: 'pool',
+        isCarryover: true,
+        carriedFromDate: task.date,
+        updatedAt: Date.now(),
+      });
     }
+    return task;
+  });
+
+  state.meta.lastCarryoverRun = todayKey;
+  return changed;
+}
+
+function renderPlanner() {
+  const hasPlanner = state.meta.hasStarted || state.tasks.length > 0;
+  dom.scheduleEmpty.style.display = hasPlanner ? 'none' : 'flex';
+  dom.plannerShell.style.display = hasPlanner ? 'block' : 'none';
+  dom.analyzeBtn.style.display = hasPlanner ? 'inline-flex' : 'none';
+  dom.plannerInitialLoader.style.display = 'none';
+  dom.bodyArea.classList.remove('planner-booting');
+  updateWeekLabel();
+
+  if (!hasPlanner) {
+    return;
   }
 
-  function renderEvents() {
-    // Clean old events
-    document.querySelectorAll('.cal-event').forEach(el => el.remove());
+  renderSummaryCards();
+  renderCoachInsights();
+  renderWeekProgressCard();
+  renderCarryoverPool();
+  renderBoard();
+  renderProgressGrid();
+  renderTemplates();
+}
 
-    events.forEach(ev => {
-      // Find row and col
-      const col = ev.day + 1;
-      const startRow = (ev.hour - 7) + 1;
-      const endRow = startRow + (ev.duration || 1);
+function renderSummaryCards() {
+  const weeklyTasks = getTasksForCurrentWeek();
+  const doneCount = weeklyTasks.filter((task) => task.status === 'done').length;
+  const scheduledCount = weeklyTasks.length;
+  const doneRate = scheduledCount ? Math.round((doneCount / scheduledCount) * 100) : 0;
+  const carryoverCount = getCarryoverTasks().length;
+  const progressSnapshot = buildProgressSnapshot();
+  const todayTasks = state.tasks.filter((task) => task.date === formatDateKey(new Date()));
 
-      const el = document.createElement('div');
-      el.className = `cal-event ${ev.type || 'math'}`;
-      el.style.gridColumn = col;
-      el.style.gridRow = `${startRow} / ${endRow}`;
-      el.draggable = true;
+  const cards = [
+    {
+      label: 'Haftalık Tamamlanma',
+      value: `%${doneRate}`,
+      meta: `${doneCount} / ${scheduledCount || 0} görev bu hafta yeşile döndü.`,
+    },
+    {
+      label: 'Bugünkü Yük',
+      value: `${todayTasks.length}`,
+      meta: `${todayTasks.filter((task) => task.status === 'done').length} görev tamamlandı.`,
+    },
+    {
+      label: 'Eksik Havuzu',
+      value: `${carryoverCount}`,
+      meta: carryoverCount > 0 ? 'Telafi edilecek bloklar seni bekliyor.' : 'Eksik havuzu şu an temiz görünüyor.',
+    },
+    {
+      label: 'Konu İlerlemesi',
+      value: `%${progressSnapshot.overallPercent}`,
+      meta: `${progressSnapshot.completedTopicCount} konu tamamlandı, ${progressSnapshot.totalTopicCount} toplam takip ediliyor.`,
+    },
+  ];
 
-      let html = `<div class="event-title">${ev.title}</div><div class="event-topic">${ev.topic}</div>`;
-      if (ev.aiNote) {
-        html += `<div class="event-ai-icon" title="Yapay Zeka Notu: ${ev.aiNote}">✨</div>`;
-      }
-      el.innerHTML = html;
+  dom.plannerSummary.innerHTML = cards.map((card) => `
+    <article class="summary-card">
+      <span class="summary-label">${escapeHtml(card.label)}</span>
+      <span class="summary-value">${escapeHtml(card.value)}</span>
+      <p class="summary-meta">${escapeHtml(card.meta)}</p>
+    </article>
+  `).join('');
+}
 
-      // Drag
-      el.addEventListener('dragstart', (e) => {
-        draggedEventId = ev.id;
-        setTimeout(() => el.style.opacity = '0.5', 0);
-      });
-      el.addEventListener('dragend', () => {
-        draggedEventId = null;
-        el.style.opacity = '1';
-      });
+function renderCoachInsights() {
+  dom.coachInsights.innerHTML = `
+    <div class="coach-panel">
+      <span class="section-tagline">Stratejik Yönlendirme</span>
+      <h3>Günün Koç Ekranı</h3>
+      <div class="coach-panel-sections">
+        <section class="coach-motivation">
+          <span class="coach-message-icon">🌟</span>
+          <p>"Taşı delen suyun gücü değil, damlaların sürekliliğidir."</p>
+        </section>
+        <section class="coach-note-card">
+          <div class="coach-note-head">
+            <span class="coach-message-icon">⚠️</span>
+            <strong>Koç Notu</strong>
+          </div>
+          <p>Eksik havuzunda 13 görev birikmiş durumda. Yeni konu çalışmasına geçmeden önce bugün havuzu eritmeye odaklanmalısın.</p>
+        </section>
+      </div>
+    </div>
+  `;
+}
 
-      // Delete on right click
-      el.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        if (confirm('Aktiviteyi silmek istiyor musunuz?')) {
-          events = events.filter(x => x.id !== ev.id);
-          saveEvents();
-          renderUI();
+function renderWeekProgressCard() {
+  const todayKey = formatDateKey(new Date());
+  const todayTasks = state.tasks.filter((task) => task.date === todayKey);
+  const completedToday = todayTasks.filter((task) => task.status === 'done').length;
+  const weeklyTasks = getTasksForCurrentWeek();
+  const activityCounts = countBy(weeklyTasks, (task) => task.activityType);
+  const topSubjects = Object.entries(countBy(weeklyTasks, (task) => `${task.track} ${task.subject}`))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  dom.weekProgressCard.innerHTML = `
+    <span class="section-tagline">İlerleme hissi</span>
+    <h3>Bu Hafta Nabız</h3>
+    <div class="focus-stack">
+      <p>${todayTasks.length > 0
+        ? `Bugün için ${todayTasks.length} görev planlanmış. ${completedToday} tanesi tamamlandı.`
+        : 'Bugün için henüz görev yok. Boş bir bloğu küçük bir hedefle açmak iyi bir başlangıç olur.'}</p>
+      <div class="focus-pill-row">
+        <span class="focus-pill">📖 Konu: ${activityCounts.topic || 0}</span>
+        <span class="focus-pill">📝 Soru: ${activityCounts.practice || 0}</span>
+        <span class="focus-pill">🔄 Tekrar: ${activityCounts.review || 0}</span>
+        <span class="focus-pill">🎯 Deneme: ${activityCounts.exam || 0}</span>
+      </div>
+      <div class="focus-pill-row">
+        ${topSubjects.length > 0
+          ? topSubjects.map(([subject, count]) => `<span class="focus-pill">🔥 ${escapeHtml(subject)} · ${count} blok</span>`).join('')
+          : '<span class="focus-pill">Planını başlatınca burada odak dağılımını göreceksin.</span>'}
+      </div>
+    </div>
+  `;
+}
+
+function renderCarryoverPool() {
+  const poolTasks = getCarryoverTasks();
+
+  if (poolTasks.length === 0) {
+    dom.carryoverList.innerHTML = '<div class="empty-pool">Şu anda eksik havuzu boş. Yarım kalan işler gece burada toplanacak.</div>';
+    return;
+  }
+
+  dom.carryoverList.innerHTML = poolTasks.map((task) => renderTaskCard(task)).join('');
+}
+
+function renderBoard() {
+  const weekDates = getWeekDates(state.meta.weekOffset);
+  const todayKey = formatDateKey(new Date());
+
+  let html = `
+    <div class="planner-board-corner">
+      <strong>Hafta</strong>
+    </div>
+  `;
+
+  weekDates.forEach((day) => {
+    html += `
+      <div class="planner-board-head ${day.key === todayKey ? 'is-today' : ''}">
+        <strong>${day.shortLabel}</strong>
+        <span>${escapeHtml(day.longLabel)}</span>
+      </div>
+    `;
+  });
+
+  BLOCKS.forEach((block) => {
+    html += `
+      <div class="planner-row-label">
+        <div>
+          <strong>${escapeHtml(block.label)}</strong>
+          <span>${escapeHtml(block.window)}</span>
+        </div>
+        <span>${escapeHtml(block.description)}</span>
+      </div>
+    `;
+
+    weekDates.forEach((day) => {
+      const tasks = getCellTasks(day.key, block.id);
+      const isEmpty = tasks.length === 0;
+      html += `
+        <section class="planner-cell ${isEmpty ? 'is-empty' : ''}" data-date="${day.key}" data-block="${block.id}">
+          ${isEmpty ? `
+            <button class="cell-empty-cta" type="button" data-add-task data-date="${day.key}" data-block="${block.id}">
+              + Görev Ekle
+            </button>
+          ` : `
+            <div class="cell-header">
+              <span class="cell-meta">${tasks.length} görev</span>
+              <button class="cell-add-btn" type="button" data-add-task data-date="${day.key}" data-block="${block.id}">+ Görev</button>
+            </div>
+          `}
+          <div class="task-list ${isEmpty ? 'is-empty' : ''}">
+            ${tasks.length > 0
+              ? tasks.map((task) => renderTaskCard(task, { compact: true })).join('')
+              : ''}
+          </div>
+        </section>
+      `;
+    });
+  });
+
+  dom.plannerBoard.innerHTML = html;
+}
+
+function renderProgressGrid() {
+  const snapshot = buildProgressSnapshot();
+  const filteredSubjects = snapshot.subjects.filter((subject) => shouldRenderSubject(subject.key));
+
+  dom.trackPreferenceSelect.value = state.userTrack;
+  dom.toggleAllSubjectsBtn.textContent = state.meta.showAllSubjects ? 'Önerilen Dersleri Göster' : 'Tüm Dersleri Göster';
+
+  if (filteredSubjects.length === 0) {
+    dom.subjectProgressGrid.innerHTML = '<div class="progress-empty">İlerleme kartları tamamlanan görevlerle dolacak.</div>';
+    return;
+  }
+
+  dom.subjectProgressGrid.innerHTML = filteredSubjects.map((subject) => `
+    <article class="progress-card">
+      <div class="progress-card-head">
+        <strong>${escapeHtml(subject.label)}</strong>
+        <span>%${subject.percent}</span>
+      </div>
+      <div class="progress-bar">
+        <span style="width:${subject.percent}%"></span>
+      </div>
+      <p>${subject.completed}/${subject.total} Konu</p>
+    </article>
+  `).join('');
+}
+
+function buildProgressSnapshot() {
+  const completedTopicKeys = new Set();
+  const subjectStats = [];
+
+  Object.entries(CURRICULUM).forEach(([track, subjects]) => {
+    subjects.forEach((subject) => {
+      const subjectKey = `${track}|${subject.name}`;
+      const completedTopics = new Set(
+        state.tasks
+          .filter((task) => task.status === 'done' && task.track === track && task.subject === subject.name)
+          .map((task) => task.topic.trim().toLowerCase())
+      );
+
+      subject.topics.forEach((topic) => {
+        if (completedTopics.has(topic.toLowerCase())) {
+          completedTopicKeys.add(`${subjectKey}|${topic.toLowerCase()}`);
         }
       });
 
-      calendarGrid.appendChild(el);
+      const completedCount = subject.topics.filter((topic) => completedTopics.has(topic.toLowerCase())).length;
+      const totalCount = subject.topics.length;
+
+      subjectStats.push({
+        label: `${track} ${subject.name}`,
+        key: subjectKey,
+        completed: completedCount,
+        total: totalCount,
+        percent: totalCount ? Math.round((completedCount / totalCount) * 100) : 0,
+      });
     });
-  }
+  });
 
-  function moveEvent(id, newDay, newHour) {
-    const ev = events.find(x => x.id === id);
-    if (ev) {
-      ev.day = parseInt(newDay);
-      ev.hour = parseInt(newHour);
-      saveEvents();
-      renderEvents();
-    }
-  }
+  const totalTopicCount = subjectStats.reduce((sum, item) => sum + item.total, 0);
+  const completedTopicCount = subjectStats.reduce((sum, item) => sum + item.completed, 0);
 
-  function saveEvents() {
-    if (window.firebase && firebase.auth && firebase.auth().currentUser && db) {
-      const uid = firebase.auth().currentUser.uid;
-      db.collection('users').doc(uid).collection('data').doc('schedule').set({
-        events: events,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-    }
-  }
+  return {
+    overallPercent: totalTopicCount ? Math.round((completedTopicCount / totalTopicCount) * 100) : 0,
+    totalTopicCount,
+    completedTopicCount,
+    subjects: subjectStats.sort((a, b) => b.percent - a.percent || a.label.localeCompare(b.label, 'tr')),
+  };
+}
 
-  // --- Add Event Flow ---
-  function openAddEventModal(day, hour) {
-    selectedCellDay = day;
-    selectedCellHour = hour;
-    document.getElementById('eventTopicInput').value = '';
-    document.getElementById('autocompleteList').style.display = 'none';
-    document.getElementById('addEventModal').classList.add('active');
-  }
+function getTasksForCurrentWeek() {
+  const weekDates = getWeekDates(state.meta.weekOffset);
+  const startKey = weekDates[0].key;
+  const endKey = weekDates[weekDates.length - 1].key;
+  return state.tasks.filter((task) => task.date && task.date >= startKey && task.date <= endKey);
+}
 
-  function injectModals() {
-    const modalHTML = `
-      <div class="auth-modal" id="addEventModal">
-        <div class="auth-modal-overlay" id="addEventOverlay"></div>
-        <div class="auth-modal-card">
-          <button class="auth-modal-x" id="addEventClose">×</button>
-          <h3 style="margin-bottom:16px; color:var(--text);">Ders/Konu Ekle</h3>
-          <div style="margin-bottom:12px; position:relative;">
-             <label style="display:block; margin-bottom:4px; font-size:0.85rem; color:var(--text-muted)">Ders veya Konu Ara</label>
-             <input type="text" id="eventTopicInput" placeholder="Örn: Paragraf..." style="width:100%; padding:10px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg); color:var(--text);" autocomplete="off" />
-             <div id="autocompleteList" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:10; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); max-height:150px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.2);"></div>
-          </div>
-          <div style="margin-bottom:16px;">
-             <label style="display:block; margin-bottom:4px; font-size:0.85rem; color:var(--text-muted)">Süre (Saat)</label>
-             <input type="number" id="eventDuration" min="1" max="4" value="1" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg); color:var(--text);" />
-          </div>
-          <button class="btn-primary" id="btnSaveEvent" style="width:100%; padding:12px;">Takvime Ekle</button>
+function getCarryoverTasks() {
+  return sortTasks(state.tasks.filter((task) => !task.date));
+}
+
+function getCellTasks(dateKey, blockId) {
+  return sortTasks(state.tasks.filter((task) => task.date === dateKey && task.block === blockId));
+}
+
+function sortTasks(tasks) {
+  return [...tasks].sort((a, b) => {
+    return (a.order || a.createdAt || 0) - (b.order || b.createdAt || 0);
+  });
+}
+
+function renderTaskCard(task, options = {}) {
+  const statusMeta = STATUS_META[task.status];
+  const activity = ACTIVITY_TYPES[task.activityType];
+  const subjectStyle = getSubjectStyle(task.subject, task.activityType);
+  const statusIcon = task.status === 'done' ? '✓' : (task.status === 'partial' ? '—' : '');
+  const tooltipText = [task.topic, task.note || task.aiNote].filter(Boolean).join(' • ');
+  const compactClass = options.compact ? 'compact' : '';
+
+  return `
+    <article
+      class="planner-task ${compactClass} subject-${subjectStyle} status-${task.status} ${task.isCarryover ? 'is-carryover' : ''}"
+      data-task-id="${task.id}"
+      draggable="true"
+      title="${escapeAttribute(tooltipText)}"
+    >
+      <button
+        class="task-check status-${task.status}"
+        type="button"
+        title="${escapeHtml(statusMeta.label)} durumuna geçir"
+        aria-label="${escapeHtml(statusMeta.label)} durumunu değiştir"
+        data-task-action="cycle-status"
+        data-task-id="${task.id}"
+      >
+        <span>${statusIcon}</span>
+      </button>
+
+      <div class="task-content">
+        <div class="task-kicker-row">
+          <span class="task-kicker">${escapeHtml(task.track)} · ${escapeHtml(task.subject)}</span>
+          ${task.isCarryover ? `<span class="task-inline-chip carryover">Devreden</span>` : ''}
+        </div>
+        <h4 class="task-title">${escapeHtml(task.topic)}</h4>
+        <div class="task-meta-row">
+          <span class="task-inline-chip">${activity.icon} ${escapeHtml(activity.label)}</span>
+          <span class="task-inline-chip">${escapeHtml(formatGoal(task))}</span>
         </div>
       </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-    // Binders
-    document.getElementById('addEventClose').addEventListener('click', () => {
-      document.getElementById('addEventModal').classList.remove('active');
-    });
-    document.getElementById('addEventOverlay').addEventListener('click', () => {
-      document.getElementById('addEventModal').classList.remove('active');
-    });
+      <div class="task-actions">
+        <button
+          class="task-icon-btn"
+          type="button"
+          title="Eksik havuzuna taşı"
+          aria-label="Eksik havuzuna taşı"
+          data-task-action="send-pool"
+          data-task-id="${task.id}"
+        >
+          ↘
+        </button>
+      </div>
+    </article>
+  `;
+}
 
-    const topicInput = document.getElementById('eventTopicInput');
-    const autoList = document.getElementById('autocompleteList');
+function getSubjectStyle(subject, activityType) {
+  if (activityType === 'exam' || subject === 'Genel Deneme') return 'exam';
 
-    topicInput.addEventListener('input', (e) => {
-      const val = e.target.value.toLowerCase();
-      autoList.innerHTML = '';
-      if (!val) { autoList.style.display = 'none'; return; }
-
-      const curr = isHighSchoolCategory ? CURRICULUM.highschool : CURRICULUM.primary;
-      let matches = [];
-      curr.forEach(subject => {
-        subject.topics.forEach(topic => {
-          if (topic.toLowerCase().includes(val) || subject.name.toLowerCase().includes(val)) {
-            matches.push({ subject, topic });
-          }
-        });
-      });
-
-      if (matches.length > 0) {
-        matches.slice(0, 5).forEach(m => {
-          const div = document.createElement('div');
-          div.style.padding = '10px';
-          div.style.borderBottom = '1px solid var(--border2)';
-          div.style.cursor = 'pointer';
-          div.innerHTML = `<strong>${m.subject.name}</strong> - ${m.topic}`;
-          div.addEventListener('click', () => {
-            topicInput.value = m.topic;
-            selectedCurriculumTitle = m.subject.name;
-            selectedCurriculumType = m.subject.type;
-            autoList.style.display = 'none';
-          });
-          autoList.appendChild(div);
-        });
-        autoList.style.display = 'block';
-      } else {
-        autoList.style.display = 'none';
-      }
-    });
-
-    document.getElementById('btnSaveEvent').addEventListener('click', () => {
-      const topic = topicInput.value || 'Serbest Çalışma';
-      const duration = parseInt(document.getElementById('eventDuration').value) || 1;
-
-      events.push({
-        id: 'ev_' + Date.now(),
-        day: selectedCellDay,
-        hour: selectedCellHour,
-        duration: duration,
-        title: selectedCurriculumTitle,
-        topic: topic,
-        type: selectedCurriculumType
-      });
-
-      saveEvents();
-      document.getElementById('addEventModal').classList.remove('active');
-      renderUI();
-    });
+  for (const subjects of Object.values(CURRICULUM)) {
+    const match = subjects.find((item) => item.name === subject);
+    if (match) return match.type;
   }
 
-  // --- Start Flows ---
-  document.getElementById('btnCreateBlank').addEventListener('click', () => {
-    scheduleEmpty.style.display = 'none';
-    calendarWrapper.style.display = 'block';
-    analyzeBtn.style.display = 'flex';
-    if (calendarGrid.children.length === 0) drawGrid();
-  });
+  return 'language';
+}
 
-  // Template Logic
-  if (btnSelectTemplate) {
-    btnSelectTemplate.addEventListener('click', () => {
-      drawerOverlay.classList.add('active');
-      templateDrawer.classList.add('active');
-      renderTemplates();
+function handleBoardClick(event) {
+  const addButton = event.target.closest('[data-add-task]');
+  if (addButton) {
+    openTaskModal({
+      date: addButton.getAttribute('data-date'),
+      block: addButton.getAttribute('data-block'),
     });
+    return;
   }
 
-  document.getElementById('closeTemplateDrawer').addEventListener('click', () => {
-    drawerOverlay.classList.remove('active');
-    templateDrawer.classList.remove('active');
-  });
-
-  function renderTemplates() {
-    const list = document.getElementById('templateList');
-    list.innerHTML = '';
-    TEMPLATES.forEach(t => {
-      const tags = t.tags.map(tag => `<span class="template-badge">${tag}</span>`).join('');
-      const div = document.createElement('div');
-      div.className = 'template-card';
-      div.innerHTML = `
-        <h4 style="color:var(--text); margin-top:0;">${t.title} <span>${t.hours} Saat</span></h4>
-        <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;">${tags}</div>
-        <button class="btn-primary" style="width:100%; padding:8px;" data-tid="${t.id}">Takvime Uygula</button>
-      `;
-      list.appendChild(div);
-    });
-
-    list.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const tid = e.target.getAttribute('data-tid');
-        applyTemplate(tid);
-      });
-    });
+  const statusButton = event.target.closest('[data-task-action="cycle-status"]');
+  if (statusButton) {
+    cycleTaskStatus(statusButton.getAttribute('data-task-id'));
+    return;
   }
 
-  function applyTemplate(id) {
-    const t = TEMPLATES.find(x => x.id === id);
-    if (t) {
-      // Map new ids
-      const newEvents = t.events.map(ev => ({ ...ev, id: 'ev_' + Math.random().toString(36).substr(2, 9) }));
-      events = [...events, ...newEvents];
-      saveEvents();
+  const poolButton = event.target.closest('[data-task-action="send-pool"]');
+  if (poolButton) {
+    moveTaskToPool(poolButton.getAttribute('data-task-id'));
+    return;
+  }
 
-      drawerOverlay.classList.remove('active');
-      templateDrawer.classList.remove('active');
-      renderUI();
+  const taskCard = event.target.closest('.planner-task');
+  if (taskCard) {
+    openTaskModal(null, taskCard.getAttribute('data-task-id'));
+  }
+}
+
+function handleDragStart(event) {
+  const taskCard = event.target.closest('.planner-task');
+  if (!taskCard) return;
+  state.dragTaskId = taskCard.getAttribute('data-task-id');
+  taskCard.classList.add('is-dragging');
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', state.dragTaskId);
+
+  const dragImage = taskCard.cloneNode(true);
+  dragImage.style.position = 'absolute';
+  dragImage.style.top = '-9999px';
+  dragImage.style.left = '-9999px';
+  dragImage.style.width = `${taskCard.offsetWidth}px`;
+  dragImage.style.pointerEvents = 'none';
+  dragImage.style.transform = 'rotate(1deg)';
+  dragImage.style.opacity = '0.95';
+  document.body.appendChild(dragImage);
+  event.dataTransfer.setDragImage(dragImage, 24, 24);
+  window.setTimeout(() => dragImage.remove(), 0);
+}
+
+function handleDragEnd(event) {
+  const taskCard = event.target.closest('.planner-task');
+  if (taskCard) {
+    taskCard.classList.remove('is-dragging');
+  }
+  clearDropIndicators();
+  state.dragTaskId = null;
+}
+
+function handleDragOver(event) {
+  const cell = event.target.closest('.planner-cell');
+  if (cell) {
+    event.preventDefault();
+    cell.classList.add('drag-over');
+    const taskList = cell.querySelector('.task-list');
+    if (taskList) {
+      taskList.classList.add('drag-over');
     }
+    return;
   }
 
-  // --- AI Integrations (Gemini) ---
-  const GEMINI_KEY = window.localStorage ? localStorage.getItem('eduai_gemini_key') || 'AIzaSyA8UNkSXTCmtmxxizsfi-rgKwFxuJRi0KE' : 'AIzaSyA8UNkSXTCmtmxxizsfi-rgKwFxuJRi0KE';
+  if (event.currentTarget === dom.carryoverList) {
+    event.preventDefault();
+    dom.carryoverList.classList.add('drag-over');
+  }
+}
 
-  async function callGemini(promptText) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
-    const req = {
-      contents: [{ role: 'user', parts: [{ text: promptText }] }],
-      generationConfig: { temperature: 0.7 }
-    };
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req)
+function handleDragLeave(event) {
+  const cell = event.target.closest('.planner-cell');
+  if (cell && !cell.contains(event.relatedTarget)) {
+    cell.classList.remove('drag-over');
+    cell.querySelector('.task-list')?.classList.remove('drag-over');
+  }
+
+  if (event.currentTarget === dom.carryoverList && !dom.carryoverList.contains(event.relatedTarget)) {
+    dom.carryoverList.classList.remove('drag-over');
+  }
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  const taskId = state.dragTaskId || event.dataTransfer.getData('text/plain');
+  if (!taskId) return;
+
+  const cell = event.target.closest('.planner-cell');
+  if (cell) {
+    moveTask(taskId, {
+      date: cell.getAttribute('data-date'),
+      block: cell.getAttribute('data-block'),
     });
-    if (!res.ok) throw new Error("API Hatası: " + res.status);
-    const data = await res.json();
-    return data.candidates[0].content.parts[0].text;
+  } else if (event.currentTarget === dom.carryoverList) {
+    moveTaskToPool(taskId);
   }
 
-  // Analyze Setup
-  const analyzeContent = document.getElementById('analyzeContent');
-  if (analyzeBtn) {
-    analyzeBtn.addEventListener('click', async () => {
-      drawerOverlay.classList.add('active');
-      analyzeDrawer.classList.add('active');
-      analyzeContent.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Analiz ediliyor... Lütfen bekleyin ⏳</div>';
+  clearDropIndicators();
+  state.dragTaskId = null;
+}
 
-      try {
-        const eventsStr = JSON.stringify(events.map(e => ({ day: e.day, hour: e.hour, duration: e.duration, title: e.title, topic: e.topic })));
-        const prompt = `Kullanıcı seviyesi: ${userLevel}. Şu anki çalışma programı: ${eventsStr}. 
-        Görev: Bu programı MEB müfredat dengesi, ders yükü dağılımı ve genel çalışma stratejisi açısından analiz et. Öğrenciyi motive edici bir dille, eksik veya fazla kısımları Markdown kullanarak raporla. Lütfen kısa ve öz ol (Maksimum 3-4 paragraf veya madde).`;
+function clearDropIndicators() {
+  document.querySelectorAll('.drag-over').forEach((element) => {
+    element.classList.remove('drag-over');
+  });
+}
 
-        const responseText = await callGemini(prompt);
-        // Çok basit Markdown renderer
-        const formatText = responseText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>');
-        analyzeContent.innerHTML = formatText;
-      } catch (err) {
-        analyzeContent.innerHTML = '<div style="color:var(--danger); padding:20px;">Analiz sırasında bir hata oluştu.</div>';
-      }
+function moveTask(taskId, placement) {
+  state.tasks = state.tasks.map((task) => {
+    if (task.id !== taskId) return task;
+    return normalizeTask({
+      ...task,
+      date: placement.date,
+      block: placement.block,
+      order: getNextOrderForPlacement(placement.date, placement.block, task.id),
+      isCarryover: false,
+      updatedAt: Date.now(),
     });
-  }
-
-  document.getElementById('closeAnalyzeDrawer').addEventListener('click', () => {
-    drawerOverlay.classList.remove('active');
-    analyzeDrawer.classList.remove('active');
   });
 
-  // AI Planner Wizard Setup
-  const btnAiPlan = document.getElementById('btnAiPlan');
-  if (btnAiPlan) {
-    btnAiPlan.addEventListener('click', async () => {
-      const hours = prompt("Yapay Zeka çalışma asistanına hoş geldin ✨\nHaftalık toplam kaç saat çalışmak istiyorsun?", "20");
-      if (!hours || isNaN(parseInt(hours))) return;
+  queuePlannerSave();
+  renderPlanner();
+}
 
-      scheduleEmpty.innerHTML = '<h3>Yapay Zeka Programınızı Hazırlıyor... ✨</h3><p>Lütfen bekleyin, uygun müfredat analiz ediliyor.</p>';
+function moveTaskToPool(taskId) {
+  state.tasks = state.tasks.map((task) => {
+    if (task.id !== taskId) return task;
+    return normalizeTask({
+      ...task,
+      date: null,
+      block: 'pool',
+      status: task.status === 'done' ? 'todo' : task.status,
+      isCarryover: true,
+      carriedFromDate: task.date || task.carriedFromDate || '',
+      order: getNextOrderForPlacement(null, 'pool', task.id),
+      updatedAt: Date.now(),
+    });
+  });
 
-      try {
-        const promptText = `Görev: ${userLevel} seviyesindeki bir öğrenci için haftada toplam ${hours} saatlik bir çalışma programı oluştur. MEB müfredatına uygun ve dengeli olsun.
-        Kurallar:
-        - Yanıt SADECE geçerli bir JSON formatında olmalı, hiçbir ek yazı veya markdown (\`\`\`json vs) kullanma. Mümkün olduğunca pür text dön.
-        - JSON formati: [{"day": 1, "hour": 9, "duration": 2, "title": "Matematik", "topic": "Türev", "type": "math", "aiNote": "Zor konu!"}].
-        - "day" 1 (Pzt) ile 7 (Pzr) arasıdır. "hour" 8 ile 23 arasıdır. "duration" saat cinsindendir (1 veya 2 vb).
-        - Çakışan saatler olmasın.
-        - SADECE valid JSON dizisi dön.`;
+  queuePlannerSave();
+  renderPlanner();
+}
 
-        const responseText = await callGemini(promptText);
-        const cleanJSON = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const generatedEvents = JSON.parse(cleanJSON);
+function cycleTaskStatus(taskId) {
+  state.tasks = state.tasks.map((task) => {
+    if (task.id !== taskId) return task;
+    const nextStatus = STATUS_ORDER[(STATUS_ORDER.indexOf(task.status) + 1) % STATUS_ORDER.length];
 
-        const newEvents = generatedEvents.map(ev => ({ ...ev, id: 'ev_' + Math.random().toString(36).substr(2, 9) }));
-        events = [...events, ...newEvents];
-        saveEvents();
+    if (!task.date && nextStatus === 'done') {
+      return normalizeTask({
+        ...task,
+        date: formatDateKey(new Date()),
+        block: 'evening',
+        status: 'done',
+        isCarryover: false,
+        order: getNextOrderForPlacement(formatDateKey(new Date()), 'evening', task.id),
+        updatedAt: Date.now(),
+      });
+    }
 
-        renderUI();
-      } catch (err) {
-        console.error(err);
-        alert("Yapay Zeka planlamasında hata oluştu. Lütfen tekrar deneyin.");
-        window.location.reload();
-      }
+    return normalizeTask({
+      ...task,
+      status: nextStatus,
+      isCarryover: nextStatus === 'done' ? false : task.isCarryover,
+      updatedAt: Date.now(),
+    });
+  });
+
+  queuePlannerSave();
+  renderPlanner();
+}
+
+function startBlankPlanner() {
+  state.meta.hasStarted = true;
+  renderPlanner();
+  queuePlannerSave();
+
+  if (state.tasks.length === 0) {
+    openTaskModal({
+      date: formatDateKey(new Date()),
+      block: 'morning',
     });
   }
-});
+}
+
+function openTemplateDrawer() {
+  state.meta.hasStarted = true;
+  openDrawer(dom.templateDrawer);
+  renderTemplates();
+}
+
+function openAiPlanModal() {
+  state.meta.hasStarted = true;
+  document.getElementById('aiPlanStatus').textContent = '';
+  openModal('aiPlanModal');
+}
+
+function openDrawer(drawer) {
+  dom.drawerOverlay.classList.add('active');
+  drawer.classList.add('active');
+}
+
+function closeDrawers() {
+  dom.drawerOverlay.classList.remove('active');
+  dom.templateDrawer.classList.remove('active');
+  dom.analyzeDrawer.classList.remove('active');
+}
+
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('active');
+  }
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+function renderTemplates() {
+  const filters = [
+    { id: 'all', label: 'Tümü' },
+    { id: 'say', label: 'Sayısal' },
+    { id: 'ea', label: 'EA' },
+    { id: 'tyt', label: 'TYT' },
+    { id: 'balanced', label: 'Telafi' },
+  ];
+
+  dom.templateFilters.innerHTML = filters.map((filter) => `
+    <button class="template-filter-btn ${state.templateFilter === filter.id ? 'active' : ''}" type="button" data-template-filter="${filter.id}">
+      ${escapeHtml(filter.label)}
+    </button>
+  `).join('');
+
+  const templates = TEMPLATE_LIBRARY.filter((template) => {
+    if (state.templateFilter === 'all') return true;
+    return template.audience === state.templateFilter;
+  });
+
+  dom.templateList.innerHTML = templates.map((template) => `
+    <article class="template-card">
+      <h4>
+        <span>${escapeHtml(template.title)}</span>
+        <span>${template.hours} Saat</span>
+      </h4>
+      <p>${escapeHtml(template.description)}</p>
+      <div style="display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;">
+        ${template.tags.map((tag) => `<span class="template-badge">${escapeHtml(tag)}</span>`).join('')}
+      </div>
+      <button class="btn-primary" style="width:100%; justify-content:center; border:none; cursor:pointer;" data-template-id="${template.id}">
+        Bu Haftaya Uygula
+      </button>
+    </article>
+  `).join('');
+}
+
+function handleTemplateFilterClick(event) {
+  const button = event.target.closest('[data-template-filter]');
+  if (!button) return;
+  state.templateFilter = button.getAttribute('data-template-filter');
+  renderTemplates();
+}
+
+function handleTemplateApplyClick(event) {
+  const button = event.target.closest('[data-template-id]');
+  if (!button) return;
+  applyTemplate(button.getAttribute('data-template-id'));
+}
+
+function applyTemplate(templateId) {
+  const template = TEMPLATE_LIBRARY.find((item) => item.id === templateId);
+  if (!template) return;
+
+  const weekDates = getWeekDates(state.meta.weekOffset);
+  const newTasks = template.slots.map((slot) => normalizeTask({
+    id: createId('tpl'),
+    date: weekDates[slot.dayIndex]?.key || weekDates[0].key,
+    block: slot.block,
+    track: slot.track,
+    subject: slot.subject,
+    topic: slot.topic,
+    activityType: slot.activityType,
+    goalType: slot.goalType,
+    goalValue: slot.goalValue,
+    status: 'todo',
+    source: 'template',
+  }));
+
+  state.meta.hasStarted = true;
+  state.tasks = [...state.tasks, ...newTasks];
+  state.meta.aiCoachNote = `${template.title} şablonu haftaya yerleştirildi. Gerekirse blokları sürükleyerek kişiselleştir.`;
+  queuePlannerSave();
+  closeDrawers();
+  renderPlanner();
+}
+
+function openTaskModal(preset = {}, taskId = null) {
+  const safePreset = preset || {};
+  const editingTask = taskId ? state.tasks.find((task) => task.id === taskId) : null;
+  const dateSelect = document.getElementById('taskDateSelect');
+  const blockSelect = document.getElementById('taskBlockSelect');
+  const activityInput = document.getElementById('taskActivityTypeInput');
+  const trackSelect = document.getElementById('taskTrackSelect');
+  const subjectSelect = document.getElementById('taskSubjectSelect');
+  const topicInput = document.getElementById('taskTopicInput');
+  const goalTypeSelect = document.getElementById('taskGoalTypeSelect');
+  const goalValueInput = document.getElementById('taskGoalValueInput');
+  const noteInput = document.getElementById('taskNoteInput');
+  const taskIdInput = document.getElementById('taskIdInput');
+  const deleteButton = document.getElementById('deleteTaskBtn');
+  const topicToggle = document.getElementById('taskShowCompletedTopics');
+
+  const chosenDate = editingTask ? (editingTask.date || 'pool') : (safePreset.date || formatDateKey(new Date()));
+  const chosenBlock = editingTask ? editingTask.block : (safePreset.block || 'morning');
+
+  document.getElementById('taskModalTitle').textContent = editingTask ? 'Görevi Düzenle' : 'Yeni Görev';
+  document.getElementById('taskModalSubtitle').textContent = editingTask
+    ? 'Blok, durum ve hedefi güncelleyerek görevi yeniden konumlandır.'
+    : 'Görevi katı saate değil, gün içindeki uygun bloğa yerleştir.';
+
+    taskIdInput.value = editingTask ? editingTask.id : '';
+  activityInput.value = editingTask ? editingTask.activityType : 'topic';
+  topicToggle.checked = false;
+  dateSelect.innerHTML = buildTaskDateOptions(chosenDate);
+  blockSelect.value = chosenDate === 'pool' ? 'morning' : chosenBlock;
+  trackSelect.value = editingTask ? editingTask.track : 'TYT';
+  renderTaskSubjectOptions(editingTask ? editingTask.subject : '');
+  subjectSelect.value = editingTask ? editingTask.subject : (subjectSelect.value || 'Matematik');
+  topicInput.value = editingTask ? editingTask.topic : '';
+  goalTypeSelect.value = editingTask ? editingTask.goalType : ACTIVITY_TYPES[activityInput.value].defaultGoalType;
+  goalValueInput.value = editingTask ? editingTask.goalValue : getDefaultGoalValue(goalTypeSelect.value);
+  noteInput.value = editingTask ? (editingTask.note || editingTask.aiNote || '') : '';
+  deleteButton.style.display = editingTask ? 'inline-flex' : 'none';
+
+  setActiveActivityChoice(activityInput.value);
+  syncTaskPlacementState();
+  syncGoalValueField();
+  renderTopicSuggestions();
+  openModal('taskModal');
+}
+
+function buildTaskDateOptions(selectedDate) {
+  const weekDates = getWeekDates(state.meta.weekOffset);
+  const options = weekDates.map((day) => ({
+    value: day.key,
+    label: `${day.shortLabel} · ${day.longLabel}`,
+  }));
+
+  if (selectedDate && selectedDate !== 'pool' && !options.some((option) => option.value === selectedDate)) {
+    options.unshift({
+      value: selectedDate,
+      label: formatLongDate(parseDateKey(selectedDate)),
+    });
+  }
+
+  options.push({ value: 'pool', label: 'Eksik Havuzu / Plansız Görev' });
+
+  return options.map((option) => `
+    <option value="${option.value}" ${option.value === selectedDate ? 'selected' : ''}>
+      ${escapeHtml(option.label)}
+    </option>
+  `).join('');
+}
+
+function handleActivityChoiceClick(event) {
+  const button = event.target.closest('[data-activity-choice]');
+  if (!button) return;
+
+  const value = button.getAttribute('data-activity-choice');
+  document.getElementById('taskActivityTypeInput').value = value;
+  setActiveActivityChoice(value);
+  document.getElementById('taskGoalTypeSelect').value = ACTIVITY_TYPES[value].defaultGoalType;
+  syncGoalValueField();
+}
+
+function setActiveActivityChoice(activityType) {
+  document.querySelectorAll('[data-activity-choice]').forEach((button) => {
+    button.classList.toggle('active', button.getAttribute('data-activity-choice') === activityType);
+  });
+}
+
+function renderTaskSubjectOptions(selectedSubject = '') {
+  const track = document.getElementById('taskTrackSelect').value;
+  const subjectSelect = document.getElementById('taskSubjectSelect');
+  const subjects = getSubjectsForTrack(track);
+  const specialSubjects = ['Genel Deneme'];
+  const allSubjects = [...subjects.map((item) => item.name), ...specialSubjects];
+  const resolvedSubject = allSubjects.includes(selectedSubject) ? selectedSubject : allSubjects[0];
+
+  subjectSelect.innerHTML = allSubjects.map((subject) => `
+    <option value="${subject}" ${subject === resolvedSubject ? 'selected' : ''}>${escapeHtml(subject)}</option>
+  `).join('');
+}
+
+function renderTopicSuggestions() {
+  const track = document.getElementById('taskTrackSelect').value;
+  const subject = document.getElementById('taskSubjectSelect').value;
+  const query = document.getElementById('taskTopicInput').value.trim().toLowerCase();
+  const showCompleted = document.getElementById('taskShowCompletedTopics').checked;
+  const suggestionBox = document.getElementById('taskTopicSuggestions');
+
+  if (subject === 'Genel Deneme') {
+    suggestionBox.innerHTML = '<button class="topic-suggestion" type="button" data-topic="TYT Genel Deneme">TYT Genel Deneme<small>İstersen başlığı serbestçe değiştirebilirsin.</small></button>';
+    return;
+  }
+
+  const topics = getTopicsFor(track, subject);
+  const completedTopics = getCompletedTopicSet(track, subject);
+
+  const filtered = topics
+    .map((topic) => ({ topic, completed: completedTopics.has(topic.toLowerCase()) }))
+    .filter((item) => showCompleted || !item.completed)
+    .filter((item) => !query || item.topic.toLowerCase().includes(query))
+    .sort((a, b) => Number(a.completed) - Number(b.completed) || a.topic.localeCompare(b.topic, 'tr'))
+    .slice(0, 16);
+
+  if (filtered.length === 0) {
+    suggestionBox.innerHTML = '<div class="topic-suggestion">Bu filtrede konu görünmüyor. Başlığı serbestçe yazabilirsin.</div>';
+    return;
+  }
+
+  suggestionBox.innerHTML = filtered.map((item) => `
+    <button class="topic-suggestion ${item.completed ? 'completed' : ''}" type="button" data-topic="${escapeAttribute(item.topic)}">
+      ${escapeHtml(item.topic)}
+      <small>${item.completed ? 'Daha önce tamamlandı, gerekirse tekrar olarak ekleyebilirsin.' : `${track} · ${subject}`}</small>
+    </button>
+  `).join('');
+}
+
+function syncGoalValueField() {
+  const goalType = document.getElementById('taskGoalTypeSelect').value;
+  const input = document.getElementById('taskGoalValueInput');
+  input.value = input.value || getDefaultGoalValue(goalType);
+  input.placeholder = GOAL_TYPE_LABELS[goalType];
+}
+
+function syncTaskPlacementState() {
+  const dateValue = document.getElementById('taskDateSelect').value;
+  const blockSelect = document.getElementById('taskBlockSelect');
+  const disabled = dateValue === 'pool';
+  blockSelect.disabled = disabled;
+  blockSelect.style.opacity = disabled ? '0.55' : '1';
+}
+
+function getDefaultGoalValue(goalType) {
+  if (goalType === 'questions') return 40;
+  if (goalType === 'exams') return 1;
+  return 2;
+}
+
+function submitTaskForm(event) {
+  event.preventDefault();
+
+  const existingTaskId = document.getElementById('taskIdInput').value;
+  const dateValue = document.getElementById('taskDateSelect').value;
+  const blockValue = document.getElementById('taskBlockSelect').value;
+  const activityType = document.getElementById('taskActivityTypeInput').value;
+  const track = document.getElementById('taskTrackSelect').value;
+  const subject = document.getElementById('taskSubjectSelect').value;
+  const topic = document.getElementById('taskTopicInput').value.trim() || defaultTopicFor(subject, activityType);
+  const goalType = document.getElementById('taskGoalTypeSelect').value;
+  const goalValue = Math.max(1, Number(document.getElementById('taskGoalValueInput').value) || 1);
+  const note = document.getElementById('taskNoteInput').value.trim();
+
+  const baseTask = existingTaskId
+    ? state.tasks.find((task) => task.id === existingTaskId)
+    : { id: createId('task'), createdAt: Date.now(), source: 'manual' };
+
+  const task = normalizeTask({
+    ...baseTask,
+    date: dateValue === 'pool' ? null : dateValue,
+    block: dateValue === 'pool' ? 'pool' : blockValue,
+    activityType,
+    track,
+    subject,
+    topic,
+    goalType,
+    goalValue,
+    note,
+    order: existingTaskId
+      ? baseTask.order
+      : getNextOrderForPlacement(dateValue === 'pool' ? null : dateValue, dateValue === 'pool' ? 'pool' : blockValue),
+    updatedAt: Date.now(),
+  });
+
+  if (existingTaskId) {
+    state.tasks = state.tasks.map((item) => item.id === existingTaskId ? task : item);
+  } else {
+    state.tasks = [...state.tasks, task];
+  }
+
+  state.meta.hasStarted = true;
+  queuePlannerSave();
+  closeModal('taskModal');
+  renderPlanner();
+}
+
+function deleteEditingTask() {
+  const taskId = document.getElementById('taskIdInput').value;
+  if (!taskId) return;
+  if (!window.confirm('Bu görevi silmek istediğine emin misin?')) return;
+
+  state.tasks = state.tasks.filter((task) => task.id !== taskId);
+  queuePlannerSave();
+  closeModal('taskModal');
+  renderPlanner();
+}
+
+async function submitAiPlanForm(event) {
+  event.preventDefault();
+
+  const statusEl = document.getElementById('aiPlanStatus');
+  const focus = document.getElementById('aiFocusSelect').value;
+  const weeklyHours = Math.max(4, Number(document.getElementById('aiWeeklyHours').value) || 20);
+  const targetNet = Math.max(10, Number(document.getElementById('aiTargetNet').value) || 75);
+  const weakSubjects = document.getElementById('aiWeakSubjects').value.trim();
+  const currentTopics = document.getElementById('aiCurrentTopics').value.trim();
+  const constraints = document.getElementById('aiConstraints').value.trim();
+  const replaceWeek = document.getElementById('aiReplaceWeek').checked;
+  const availableBlocks = Array.from(document.querySelectorAll('[data-ai-block].active')).map((button) => button.getAttribute('data-ai-block'));
+
+  if (availableBlocks.length === 0) {
+    statusEl.textContent = 'En az bir uygun blok seçmelisin.';
+    return;
+  }
+
+  statusEl.textContent = 'Haftalık plan hazırlanıyor...';
+
+  try {
+    const weekDates = getWeekDates(state.meta.weekOffset);
+    const completedTopics = Array.from(getAllCompletedTopicKeys()).slice(0, 40);
+    const currentTasks = getTasksForCurrentWeek().map((task) => ({
+      date: task.date,
+      block: task.block,
+      track: task.track,
+      subject: task.subject,
+      topic: task.topic,
+      activityType: task.activityType,
+      status: task.status,
+    }));
+
+    const prompt = `
+Sen deneyimli bir YKS koçusun. Bir öğrenci için haftalık blok bazlı plan oluşturacaksın.
+
+Öğrenci seviyesi: ${state.userLevel || 'lise'}
+Hedef alan: ${focus}
+Haftalık saat: ${weeklyHours}
+Hedef net: ${targetNet}
+Zayıf dersler: ${weakSubjects || 'belirtilmedi'}
+Mevcut durum: ${currentTopics || 'belirtilmedi'}
+Ek notlar: ${constraints || 'belirtilmedi'}
+Kullanılabilir bloklar: ${availableBlocks.join(', ')}
+Bu haftanın günleri: ${weekDates.map((day, index) => `${index + 1}=${day.shortLabel} (${day.longLabel})`).join(' | ')}
+Zaten tamamlanan konular: ${completedTopics.join(', ') || 'yok'}
+Mevcut haftalık plan özeti: ${JSON.stringify(currentTasks)}
+
+Kurallar:
+- Sadece geçerli JSON dön.
+- JSON formatı tam olarak şu olsun:
+{"tasks":[{"day":1,"block":"morning","track":"TYT","subject":"Matematik","topic":"Problemler","activityType":"practice","goalType":"questions","goalValue":50,"note":"Kısa not","aiNote":"Koç tavsiyesi"}],"coachNote":"tek paragraf kısa koç notu"}
+- day 1 ile 7 arasında olsun.
+- block sadece ${availableBlocks.join(', ')} olabilir.
+- activityType sadece topic, practice, exam veya review olabilir.
+- goalType sadece duration, questions veya exams olabilir.
+- Haftalık yük dengeli dağılsın.
+- En az 1 tekrar görevi ekle.
+- Uygunsa 1 deneme bloğu ekle.
+- Tamamlanan konuları tekrar etmek gerekmiyorsa önermemeye çalış.
+- Konular MEB/YKS uyumlu olsun.
+- Markdown, açıklama, kod bloğu, yorum yazma. Sadece JSON.
+    `;
+
+    const responseText = await callGemini(prompt, 0.45);
+    const parsed = parseJsonResponse(responseText);
+
+    if (!parsed.tasks || !Array.isArray(parsed.tasks)) {
+      throw new Error('AI planında görev listesi bulunamadı.');
+    }
+
+    const aiTasks = parsed.tasks.map((task) => {
+      const dayIndex = Math.max(0, Math.min(6, (Number(task.day) || 1) - 1));
+      return normalizeTask({
+        id: createId('ai'),
+        date: weekDates[dayIndex]?.key || weekDates[0].key,
+        block: availableBlocks.includes(task.block) ? task.block : availableBlocks[0],
+        track: task.track === 'AYT' ? 'AYT' : 'TYT',
+        subject: task.subject || 'Serbest Çalışma',
+        topic: task.topic || task.subject || 'Serbest Çalışma',
+        activityType: ACTIVITY_TYPES[task.activityType] ? task.activityType : 'topic',
+        goalType: GOAL_TYPE_LABELS[task.goalType] ? task.goalType : 'duration',
+        goalValue: Math.max(1, Number(task.goalValue) || 1),
+        note: task.note || '',
+        aiNote: task.aiNote || '',
+        status: 'todo',
+        source: 'ai',
+      });
+    });
+
+    if (replaceWeek) {
+      const currentWeekKeys = new Set(weekDates.map((day) => day.key));
+      state.tasks = state.tasks.filter((task) => !(task.date && currentWeekKeys.has(task.date) && task.status !== 'done'));
+    }
+
+    state.tasks = [...state.tasks, ...aiTasks];
+    state.meta.hasStarted = true;
+    state.meta.aiCoachNote = parsed.coachNote || 'AI planı yerleşti. İlk hedef, blokların tamamını değil ritmini korumak olsun.';
+    queuePlannerSave();
+    statusEl.textContent = 'Plan başarıyla oluşturuldu.';
+    closeModal('aiPlanModal');
+    renderPlanner();
+  } catch (error) {
+    console.error(error);
+    statusEl.textContent = error.message || 'AI planı oluşturulamadı.';
+  }
+}
+
+async function analyzePlanner() {
+  const weeklyTasks = getTasksForCurrentWeek();
+  if (weeklyTasks.length === 0) {
+    dom.analyzeContent.innerHTML = '<div style="padding:20px; color:var(--text-muted);">Analiz için önce bu haftaya birkaç görev ekle.</div>';
+    openDrawer(dom.analyzeDrawer);
+    return;
+  }
+
+  openDrawer(dom.analyzeDrawer);
+  dom.analyzeContent.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Koç analizi hazırlanıyor... ⏳</div>';
+
+  try {
+    const progress = buildProgressSnapshot();
+    const prompt = `
+Sen deneyimli bir YKS koçusun. Aşağıdaki haftalık görev planını analiz et.
+
+Öğrenci seviyesi: ${state.userLevel}
+Haftalık görevler: ${JSON.stringify(weeklyTasks.map((task) => ({
+      date: task.date,
+      block: task.block,
+      track: task.track,
+      subject: task.subject,
+      topic: task.topic,
+      activityType: task.activityType,
+      goal: formatGoal(task),
+      status: task.status,
+      carryover: task.isCarryover,
+    })))}
+Global ilerleme: ${JSON.stringify({
+      overallPercent: progress.overallPercent,
+      completedTopicCount: progress.completedTopicCount,
+      carryoverCount: getCarryoverTasks().length,
+    })}
+
+Görev:
+- Planın stratejik güçlü yanlarını söyle.
+- Tek ders yükü, tekrar eksikliği veya fazla dağınıklık varsa belirt.
+- Öğrenciyi motive eden, kısa ve uygulanabilir öneriler ver.
+- Cevap maksimum 4 kısa paragraf veya madde olsun.
+- Markdown kullanılabilir.
+    `;
+
+    const responseText = await callGemini(prompt, 0.5);
+    dom.analyzeContent.innerHTML = formatMarkdownLite(responseText);
+  } catch (error) {
+    console.error(error);
+    dom.analyzeContent.innerHTML = '<div style="color:var(--danger); padding:20px;">Analiz sırasında bir hata oluştu.</div>';
+  }
+}
+
+async function callGemini(promptText, temperature = 0.5) {
+  const payload = {
+    contents: [{ role: 'user', parts: [{ text: promptText }] }],
+    generationConfig: {
+      temperature,
+      topP: 0.85,
+      maxOutputTokens: 4096,
+    },
+  };
+
+  const response = await fetch('/api/ai/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      models: ['gemini-2.5-flash', 'gemini-2.0-flash-001', 'gemini-2.0-flash'],
+      payload,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const code = errorBody?.error?.code || '';
+    const message = errorBody?.error?.message || `API hatası: ${response.status}`;
+    if (code === 'MISSING_SERVER_API_KEY') {
+      throw new Error('Sunucuda Gemini anahtarı tanımlı değil.');
+    }
+    throw new Error(message);
+  }
+
+  const data = await response.json();
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+function parseJsonResponse(responseText) {
+  const cleaned = (responseText || '').replace(/```json/gi, '').replace(/```/g, '').trim();
+  return JSON.parse(cleaned);
+}
+
+function queuePlannerSave(immediate = false) {
+  clearTimeout(state.saveTimer);
+  if (immediate) {
+    persistPlanner().catch((error) => console.error('Plan kaydedilemedi:', error));
+    return;
+  }
+
+  state.saveTimer = window.setTimeout(() => {
+    persistPlanner().catch((error) => console.error('Plan kaydedilemedi:', error));
+  }, 250);
+}
+
+async function persistPlanner() {
+  const progressSnapshot = buildProgressSnapshot();
+  const payload = {
+    version: PLANNER_VERSION,
+    meta: state.meta,
+    tasks: state.tasks.map((task) => ({
+      ...task,
+      updatedAt: task.updatedAt || Date.now(),
+    })),
+  };
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (error) {
+    console.error('Yerel plan kaydedilemedi:', error);
+  }
+
+  if (!(state.currentUser && typeof db !== 'undefined' && db)) {
+    return;
+  }
+
+  await db.collection('users').doc(state.currentUser.uid).collection('data').doc('schedule').set({
+    ...payload,
+    summary: {
+      overallPercent: progressSnapshot.overallPercent,
+      carryoverCount: getCarryoverTasks().length,
+    },
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  await db.collection('users').doc(state.currentUser.uid).set({
+    track: state.userTrack,
+    studyPlannerProgress: {
+      overallPercent: progressSnapshot.overallPercent,
+      completedTopicCount: progressSnapshot.completedTopicCount,
+      totalTopicCount: progressSnapshot.totalTopicCount,
+      carryoverCount: getCarryoverTasks().length,
+      subjects: progressSnapshot.subjects.reduce((acc, item) => {
+        acc[item.key] = {
+          label: item.label,
+          percent: item.percent,
+          completed: item.completed,
+          total: item.total,
+        };
+        return acc;
+      }, {}),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    },
+  }, { merge: true });
+}
+
+function getNextOrderForPlacement(date, block, excludingTaskId = null) {
+  const scopedTasks = state.tasks.filter((task) => {
+    if (excludingTaskId && task.id === excludingTaskId) return false;
+    const sameDate = (task.date || null) === (date || null);
+    const sameBlock = (task.block || 'pool') === (block || 'pool');
+    return sameDate && sameBlock;
+  });
+
+  if (scopedTasks.length === 0) {
+    return Date.now();
+  }
+
+  const maxOrder = Math.max(...scopedTasks.map((task) => Number(task.order) || 0));
+  return maxOrder + 1;
+}
+
+function handleTrackPreferenceChange(event) {
+  state.userTrack = normalizeTrackPreference(event.target.value);
+  queuePlannerSave();
+  renderProgressGrid();
+}
+
+function toggleAllSubjects() {
+  state.meta.showAllSubjects = !state.meta.showAllSubjects;
+  queuePlannerSave();
+  renderProgressGrid();
+}
+
+function changeWeek(direction) {
+  state.meta.weekOffset += direction;
+  renderPlanner();
+  queuePlannerSave();
+}
+
+function resetWeek() {
+  state.meta.weekOffset = 0;
+  renderPlanner();
+  queuePlannerSave();
+}
+
+function updateWeekLabel() {
+  const weekDates = getWeekDates(state.meta.weekOffset);
+  dom.weekLabel.textContent = `${weekDates[0].longLabel} - ${weekDates[6].longLabel}`;
+}
+
+function getWeekDates(offset = 0) {
+  const baseWeek = startOfWeek(new Date());
+  const shiftedWeek = addDays(baseWeek, offset * 7);
+  return DAYS.map((shortLabel, index) => {
+    const date = addDays(shiftedWeek, index);
+    return {
+      shortLabel,
+      date,
+      key: formatDateKey(date),
+      longLabel: formatDateLabel(formatDateKey(date)),
+    };
+  });
+}
+
+function startOfWeek(baseDate) {
+  const date = new Date(baseDate);
+  date.setHours(0, 0, 0, 0);
+  const day = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - day);
+  return date;
+}
+
+function addDays(baseDate, amount) {
+  const date = new Date(baseDate);
+  date.setDate(date.getDate() + amount);
+  return date;
+}
+
+function formatDateKey(date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateKey(value) {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatDateLabel(dateKey) {
+  return new Intl.DateTimeFormat('tr-TR', {
+    day: 'numeric',
+    month: 'short',
+  }).format(parseDateKey(dateKey));
+}
+
+function formatLongDate(date) {
+  return new Intl.DateTimeFormat('tr-TR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(date);
+}
+
+function formatGoal(task) {
+  return `${task.goalValue} ${GOAL_TYPE_LABELS[task.goalType]}`;
+}
+
+function getSubjectsForTrack(track) {
+  return CURRICULUM[track] || CURRICULUM.TYT;
+}
+
+function getTopicsFor(track, subject) {
+  return getSubjectsForTrack(track).find((item) => item.name === subject)?.topics || [];
+}
+
+function getCompletedTopicSet(track, subject) {
+  return new Set(
+    state.tasks
+      .filter((task) => task.status === 'done' && task.track === track && task.subject === subject)
+      .map((task) => task.topic.toLowerCase())
+  );
+}
+
+function getAllCompletedTopicKeys() {
+  return new Set(
+    state.tasks
+      .filter((task) => task.status === 'done')
+      .map((task) => `${task.track} ${task.subject} ${task.topic}`.toLowerCase())
+  );
+}
+
+function defaultTopicFor(subject, activityType) {
+  if (subject === 'Genel Deneme') {
+    return activityType === 'exam' ? 'Genel Deneme' : 'Deneme Analizi';
+  }
+  return activityType === 'review' ? `${subject} Tekrarı` : `${subject} Çalışması`;
+}
+
+function normalizeTrackPreference(value) {
+  const allowed = ['sayisal', 'esit_agirlik', 'sozel', 'dil', 'tyt', 'mixed'];
+  return allowed.includes(value) ? value : 'mixed';
+}
+
+function shouldRenderSubject(subjectKey) {
+  if (state.meta.showAllSubjects || state.userTrack === 'mixed') {
+    return true;
+  }
+
+  const visibleKeys = getVisibleSubjectKeysForTrack(state.userTrack);
+  return visibleKeys.has(subjectKey);
+}
+
+function getVisibleSubjectKeysForTrack(trackPreference) {
+  const allTytKeys = (CURRICULUM.TYT || []).map((subject) => `TYT|${subject.name}`);
+
+  const map = {
+    sayisal: [...allTytKeys, 'AYT|Matematik', 'AYT|Geometri', 'AYT|Fizik', 'AYT|Kimya', 'AYT|Biyoloji'],
+    esit_agirlik: [...allTytKeys, 'AYT|Matematik', 'AYT|Geometri', 'AYT|Edebiyat', 'AYT|Tarih-1', 'AYT|Coğrafya-1'],
+    sozel: [...allTytKeys, 'AYT|Edebiyat', 'AYT|Tarih-1', 'AYT|Coğrafya-1', 'AYT|Tarih-2', 'AYT|Coğrafya-2', 'AYT|Felsefe Grubu', 'AYT|Din Kültürü'],
+    dil: [...allTytKeys],
+    tyt: [...allTytKeys],
+    mixed: [...allTytKeys, ...(CURRICULUM.AYT || []).map((subject) => `AYT|${subject.name}`)],
+  };
+
+  return new Set(map[trackPreference] || map.mixed);
+}
+
+function countBy(list, selector) {
+  return list.reduce((acc, item) => {
+    const key = selector(item);
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function createId(prefix) {
+  return `${prefix}_${Math.random().toString(36).slice(2, 9)}${Date.now().toString(36).slice(-4)}`;
+}
+
+function formatMarkdownLite(text) {
+  return escapeHtml(text)
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br/>');
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value).replace(/"/g, '&quot;');
+}

@@ -19,7 +19,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 
-<body id="bodyArea">
+<body id="bodyArea" class="planner-booting">
 
   <!-- Navbar Copt (identical structural requirement) -->
   <nav class="navbar" id="navbar">
@@ -109,42 +109,128 @@
 
   <!-- Main Content -->
   <main class="schedule-wrapper">
-    <div class="schedule-header-actions">
-      <h1 class="schedule-title">
-        Çalışma <span class="gradient-text" style="font-family: var(--font-display);">Programım</span>
-      </h1>
-      <button class="ai-analyze-btn" id="analyzeBtn" style="display:none;">
-        <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
-          <path
-            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        Programı Analiz Et
-      </button>
+    <section class="schedule-hero">
+      <div>
+        <span class="schedule-kicker">BearEdu Study OS</span>
+        <h1 class="schedule-title">
+          Çalışma <span class="gradient-text" style="font-family: var(--font-display);">Sistemin</span>
+        </h1>
+        <p class="schedule-subtitle">
+          Katı saat çizelgesi yerine gün içi bloklarla ilerle, eksiklerini havuzda topla ve tamamladığın her görevle
+          gerçek ilerlemeni gör.
+        </p>
+      </div>
+
+      <div class="schedule-actions">
+        <div class="week-switcher">
+          <button class="week-nav-btn" id="prevWeekBtn" aria-label="Önceki hafta">‹</button>
+          <div class="week-label-wrap">
+            <span class="week-label-top">Haftalık görünüm</span>
+            <strong id="weekLabel">Bu Hafta</strong>
+          </div>
+          <button class="week-nav-btn" id="nextWeekBtn" aria-label="Sonraki hafta">›</button>
+          <button class="btn-secondary week-reset-btn" id="currentWeekBtn">Bu Hafta</button>
+        </div>
+
+        <button class="ai-analyze-btn" id="analyzeBtn" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+            <path
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Haftayı Analiz Et
+        </button>
+      </div>
+    </section>
+
+    <div class="planner-initial-loader" id="plannerInitialLoader">
+      <div class="planner-loader-orb"></div>
+      <strong>Çalışma sistemi hazırlanıyor</strong>
+      <span>Görev blokların ve ilerleme görünümün yükleniyor.</span>
     </div>
 
-    <!-- Empty State -->
     <div class="schedule-empty" id="scheduleEmpty">
-      <h3>Henüz bir çalışma programın yok 👀</h3>
-      <p>Yeni bir rutin oluşturarak hedeflerine bir adım daha yaklaş!</p>
+      <h3>Henüz aktif bir çalışma sistemin yok 👀</h3>
+      <p>İster sıfırdan bloklarını kur, ister hazır şablon al, istersen yapay zekaya haftanı kurdur.</p>
       <div class="empty-actions">
-        <button class="btn-primary" id="btnCreateBlank">
+        <button class="btn-primary" data-action="create-blank">
           Sıfırdan Oluştur
         </button>
-        <button class="btn-secondary" id="btnSelectTemplate" style="display:none;">
+        <button class="btn-secondary" data-action="open-template">
           Şablondan Seç
         </button>
-        <button class="btn-secondary" id="btnAiPlan">
+        <button class="btn-secondary" data-action="open-ai">
           ✨ Yapay Zeka ile Planla
         </button>
       </div>
     </div>
 
-    <!-- Calendar Wrapper -->
-    <div class="calendar-wrapper" id="calendarWrapper">
-      <div class="calendar-grid" id="calendarGrid">
-        <!-- Rendered by JS -->
-      </div>
+    <div class="planner-shell" id="plannerShell">
+      <section class="planner-toolbar">
+        <div class="planner-toolbar-copy">
+          <h2>Haftalık Görev Blokları</h2>
+          <p>Sabah, öğle ve akşam bloklarını kullan; sürükle-bırak ile haftanı canlı tut.</p>
+        </div>
+        <div class="planner-toolbar-actions">
+          <button class="btn-secondary" id="btnSelectTemplate">Şablondan Seç</button>
+          <button class="btn-secondary" id="btnAiPlan">✨ Yapay Zeka ile Planla</button>
+        </div>
+      </section>
+
+      <section class="summary-grid" id="plannerSummary"></section>
+
+      <section class="insights-grid">
+        <article class="insight-card" id="coachInsights"></article>
+        <article class="insight-card focus-card" id="weekProgressCard"></article>
+      </section>
+
+      <section class="carryover-section">
+        <div class="section-row">
+          <div>
+            <span class="section-tagline">Eksiklerini kaybetme</span>
+            <h3>Eksik Havuzu</h3>
+          </div>
+          <p>Günü bitiremediğinde görevler burada toplanır. İstediğin güne sürükleyip telafi edebilirsin.</p>
+        </div>
+        <div class="carryover-dropzone" id="carryoverList"></div>
+      </section>
+
+      <section class="planner-board-section">
+        <div class="section-row">
+          <div>
+            <span class="section-tagline">Esnek haftalık görünüm</span>
+            <h3>Zaman Blokları</h3>
+          </div>
+          <p>Her blok bir ders zili değil, gün içinde tamamlanacak hedefler için ayrılmış bir alan. Kartları bloklar arasında taşıyıp programı akışa göre düzenleyebilirsin.</p>
+        </div>
+        <div class="planner-board-wrapper">
+          <div class="planner-board" id="plannerBoard"></div>
+        </div>
+      </section>
+
+      <section class="progress-section">
+        <div class="section-row">
+          <div>
+            <span class="section-tagline">İlerleme hissi</span>
+            <h3>Global Konu Senkronizasyonu</h3>
+          </div>
+          <div class="progress-controls">
+            <p>Tamamlanan görevler BearEdu içindeki ders ilerleme yüzdelerine dönüşür.</p>
+            <div class="progress-controls-actions">
+              <select id="trackPreferenceSelect" aria-label="Alan tercihi">
+                <option value="sayisal">Sayısal</option>
+                <option value="esit_agirlik">Eşit Ağırlık</option>
+                <option value="sozel">Sözel</option>
+                <option value="dil">Dil</option>
+                <option value="tyt">Sadece TYT</option>
+                <option value="mixed">Karışık</option>
+              </select>
+              <button class="btn-secondary" id="toggleAllSubjectsBtn">Tüm Dersleri Göster</button>
+            </div>
+          </div>
+        </div>
+        <div class="progress-grid" id="subjectProgressGrid"></div>
+      </section>
     </div>
   </main>
 
@@ -169,7 +255,7 @@
   <!-- Analyze Result Drawer -->
   <div class="drawer" id="analyzeDrawer">
     <div class="drawer-header">
-      <h3 style="margin:0; font-family:var(--font-display); color:var(--primary);">Gemini Analizi ✨</h3>
+      <h3 style="margin:0; font-family:var(--font-display); color:var(--primary);">Haftalık Koç Analizi ✨</h3>
       <button class="auth-modal-x" id="closeAnalyzeDrawer">×</button>
     </div>
     <div class="drawer-body" id="analyzeContent" style="font-size:0.9rem; line-height:1.5;">

@@ -1,6 +1,6 @@
 /* =============================================
    BearEdu Chat Page — chat.js
-   Firebase Auth + Firestore + Gemini API
+   Firebase Auth + Firestore + server-side Gemini proxy
    ============================================= */
 
 // ─── Firebase Config (auth.js ile aynı) ─────────────────────────────────────
@@ -13,8 +13,6 @@ const firebaseConfig = {
   appId: "1:32991193464:web:652b3e374b102b73e1808d",
   measurementId: "G-HJTYMZ9TV9"
 };
-
-const GEMINI_KEY = 'AIzaSyA8UNkSXTCmtmxxizsfi-rgKwFxuJRi0KE';
 
 
 const GROQ_SYSTEM_PROMPT = `Sen BearEdu AI Assistant - Türkiye MEB müfredatına uyumlu bir öğretmensin.
@@ -670,18 +668,21 @@ async function callGeminiAPI(userMessage, history = [], images = []) {
 
   let res;
   try {
-    for (const model of MODELS) {
-      res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
-      );
-      if (res.status !== 404) break; // 404 değilse bu modeli kullan
-    }
+    res = await fetch('/api/ai/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        models: MODELS,
+        payload,
+      }),
+    });
   } catch (e) { throw new Error('NETWORK: ' + e.message); }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     const msg = err?.error?.message || `HTTP ${res.status}`;
+    const code = err?.error?.code || '';
+    if (code === 'MISSING_SERVER_API_KEY') throw new Error('MISSING_SERVER_API_KEY: ' + msg);
     if (res.status === 429) throw new Error('RATE_LIMIT: ' + msg);
     if (res.status === 400) throw new Error('BAD_REQUEST: ' + msg);
     if (res.status === 403) throw new Error('INVALID_KEY: ' + msg);
@@ -732,6 +733,7 @@ Seviye: ${levelMap[level]} | Ders: ${subjectMap[subject]}`;
 function getApiError(msg) {
   if (msg?.includes('RATE_LIMIT')) return 'Çok hızlı istek gönderdiniz. 1 dakika bekleyip tekrar deneyin.';
   if (msg?.includes('INVALID_KEY')) return 'API anahtarı geçersiz. Lütfen sayfayı yenileyin.';
+  if (msg?.includes('MISSING_SERVER_API_KEY')) return 'Sunucuda Gemini anahtarı tanımlı değil. `.env` dosyasını kontrol edin.';
   if (msg?.includes('NETWORK')) return 'İnternet bağlantınızı kontrol edin.';
   if (msg?.includes('EMPTY_RESPONSE')) return 'Yapay zekadan yanıt alınamadı. Soruyu farklı şekilde deneyin.';
   if (msg?.includes('BAD_REQUEST')) return `Geçersiz istek: ${msg.replace('BAD_REQUEST: ', '')}`;

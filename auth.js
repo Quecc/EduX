@@ -117,7 +117,7 @@ async function signInWithEmail(email, password) {
 // ─── Kayıt Ol ────────────────────────────────────────────────────────────────
 async function registerWithEmail(data) {
   if (!firebaseReady) { showSetupAlert(); return; }
-  const { fullName, email, password, level, birthYear } = data;
+  const { fullName, email, password, level, birthYear, track } = data;
   setAuthLoading(true, 'register');
   try {
     const result = await auth.createUserWithEmailAndPassword(email, password);
@@ -127,6 +127,7 @@ async function registerWithEmail(data) {
       displayName: fullName,
       level: level || '',
       birthYear: birthYear || '',
+      track: track || 'mixed',
     });
     closeAllModals();
     showSuccessToast(`Hoş geldin, ${fullName.split(' ')[0]}! Hesabın oluşturuldu 🎉`);
@@ -168,6 +169,7 @@ async function saveUserToFirestore(user, extra = {}) {
       ...baseData,
       level: extra.level || '',
       birthYear: extra.birthYear || '',
+      track: extra.track || 'mixed',
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
   } else {
@@ -265,8 +267,8 @@ function showAuthButtonsInNavbar() {
   const heroSecondaryBtn = document.getElementById('heroSecondaryBtn');
   const heroSecondaryText = document.getElementById('heroSecondaryText');
   if (heroSecondaryBtn && heroSecondaryText) {
-    heroSecondaryText.textContent = 'Nasıl Çalışır';
-    heroSecondaryBtn.href = '#how-it-works';
+    heroSecondaryText.textContent = 'Çalışma Programı';
+    heroSecondaryBtn.href = 'calisma-programi.html';
   }
 }
 
@@ -323,6 +325,7 @@ function setupAuthForms() {
     const password  = document.getElementById('regPassword').value;
     const password2 = document.getElementById('regPassword2').value;
     const level     = document.getElementById('regLevel').value;
+    const track     = document.getElementById('regTrack').value;
     const birthYear = document.getElementById('regBirthYear').value;
 
     if (!fullName || !email || !password || !password2) {
@@ -337,7 +340,7 @@ function setupAuthForms() {
       showRegisterError('Şifreler eşleşmiyor.');
       return;
     }
-    await registerWithEmail({ fullName, email, password, level, birthYear });
+    await registerWithEmail({ fullName, email, password, level, birthYear, track });
   });
 
   // Şifremi Unuttum
