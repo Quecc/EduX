@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BearEdu — Yapay Zeka Asistanı</title>
+  <title>BearMate — Yapay Zeka Asistanı</title>
   <meta name="description"
-    content="BearEdu ile birebir yapay zeka destekli öğrenme deneyimi. Soru sor, konu öğren, pratik yap." />
+    content="BearMate ile birebir yapay zeka destekli öğrenme deneyimi. Soru sor, konu öğren, pratik yap." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -29,8 +29,8 @@
   <!-- ── Auth Yükleniyor Ekranı ─────────────────────────── -->
   <div id="authLoadingScreen" class="auth-loading">
     <div class="auth-loading-inner">
-      <img src="beareduxaimg.png" alt="BearEdu"
-        style="width:100px;height:100px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(108,99,255,0.4));animation:logo-pulse 3s ease infinite;" />
+      <img src="beareduxaimg.png" alt="BearMate"
+        style="width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,113,227,0.2));" />
       <p>Yükleniyor...</p>
     </div>
   </div>
@@ -39,7 +39,8 @@
   <div id="loginRequiredScreen" class="login-required" style="display:none;">
     <div class="login-required-card">
       <div class="login-req-logo">
-        <img src="beareduxaimg.png" alt="BearEdu" style="height:56px;object-fit:contain;filter:brightness(0) invert(1);" />
+        <img src="beareduxaimg.png" alt="BearMate"
+          style="height:40px;object-fit:contain;filter:brightness(0) invert(1);" />
       </div>
       <h2>Giriş Gerekli</h2>
       <p>AI asistanını kullanmak için önce giriş yapman gerekiyor.</p>
@@ -55,8 +56,7 @@
       <!-- Sidebar Header -->
       <div class="sidebar-header">
         <a href="index.html" class="sidebar-logo">
-          <img src="beareduxaimg.png" alt="BearEdu"
-            style="height:111px;object-fit:contain;filter:brightness(0) invert(1);" />
+          <img src="beareduxaimg.png" alt="BearMate" style="height:48px;object-fit:contain;" />
         </a>
         <button class="new-chat-btn" id="newChatBtn" title="Yeni Sohbet">
           <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
@@ -81,21 +81,351 @@
 
       <!-- Sidebar Footer -->
       <div class="sidebar-footer">
-        <div class="sidebar-user" id="sidebarUser">
+        <!-- Kullanıcı satırı — tıkla menü aç -->
+        <div class="sidebar-user" id="sidebarUser" role="button" tabindex="0">
           <div class="sidebar-avatar" id="sidebarAvatar">?</div>
           <div class="sidebar-user-info">
             <strong id="sidebarUserName">Kullanıcı</strong>
             <span id="sidebarUserEmail"></span>
           </div>
-          <button class="sidebar-logout-btn" id="sidebarLogoutBtn" title="Çıkış Yap">
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16" class="sidebar-user-chevron">
+            <path d="M8 10l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+
+        <!-- Popup Menü (ChatGPT tarzı) -->
+        <div class="user-popup-menu" id="userPopupMenu">
+          <button class="popup-menu-item" id="openSettingsBtn">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+              <path
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
+            </svg>
+            <span>Ayarlar</span>
+          </button>
+          <button class="popup-menu-item" id="popupHelpBtn">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+              <path
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>Yardım</span>
+          </button>
+          <div class="popup-menu-divider"></div>
+          <button class="popup-menu-item popup-menu-danger" id="popupLogoutBtn">
             <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
               <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
+            <span>Oturumu Kapat</span>
           </button>
         </div>
       </div>
     </aside>
+
+    <!-- ═══ AYARLAR MODALI (ChatGPT tarzı) ═══ -->
+    <div class="settings-overlay" id="settingsOverlay"></div>
+    <div class="settings-modal" id="settingsModal">
+      <div class="settings-sidebar">
+        <h3 class="settings-modal-title">Ayarlar</h3>
+        <nav class="settings-nav">
+          <button class="settings-nav-item active" data-settings-tab="general">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
+            Genel
+          </button>
+          <button class="settings-nav-item" data-settings-tab="appearance">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="currentColor"/></svg>
+            Görünüm
+          </button>
+          <button class="settings-nav-item" data-settings-tab="personalize">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Kişiselleştirme
+          </button>
+          <button class="settings-nav-item" data-settings-tab="about">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Hakkında
+          </button>
+        </nav>
+      </div>
+      <div class="settings-content">
+        <button class="settings-close-btn" id="settingsCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <!-- Tab: Genel -->
+        <div class="settings-tab-content active" id="settingsTabGeneral">
+          <h2 class="settings-tab-title">Genel</h2>
+          <div class="settings-group">
+            <div class="settings-row">
+              <div class="settings-row-label"><span>Görünüm</span></div>
+              <div class="settings-row-control">
+                <select id="settingsThemeSelect" class="settings-select">
+                  <option value="light">Açık</option>
+                  <option value="dark">Karanlık</option>
+                  <option value="system">Sistem</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label"><span>Yazı Boyutu</span></div>
+              <div class="settings-row-control">
+                <select id="settingsFontSize" class="settings-select">
+                  <option value="small">Küçük</option>
+                  <option value="normal" selected>Normal</option>
+                  <option value="large">Büyük</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Vurgu Rengi</span>
+                <small>Arayüz vurgu rengi</small>
+              </div>
+              <div class="settings-row-control">
+                <div class="accent-color-picker" id="accentColorPicker">
+                  <button class="accent-swatch active" data-accent="blue" title="Mavi" style="--swatch:#0071E3;"></button>
+                  <button class="accent-swatch" data-accent="purple" title="Mor" style="--swatch:#6C63FF;"></button>
+                  <button class="accent-swatch" data-accent="green" title="Yeşil" style="--swatch:#34C759;"></button>
+                  <button class="accent-swatch" data-accent="orange" title="Turuncu" style="--swatch:#FF9500;"></button>
+                  <button class="accent-swatch" data-accent="pink" title="Pembe" style="--swatch:#FF2D55;"></button>
+                  <button class="accent-swatch" data-accent="teal" title="Turkuaz" style="--swatch:#5AC8FA;"></button>
+                </div>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label"><span>Dil</span></div>
+              <div class="settings-row-control">
+                <select id="settingsLang" class="settings-select">
+                  <option value="tr" selected>Türkçe</option>
+                  <option value="en">English</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Sohbet Geçmişi</span>
+                <small>Sohbet geçmişini temizle</small>
+              </div>
+              <div class="settings-row-control">
+                <button class="settings-btn-danger" id="clearAllChatsBtn">Tümünü Sil</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Görünüm -->
+        <div class="settings-tab-content" id="settingsTabAppearance">
+          <h2 class="settings-tab-title">Görünüm</h2>
+          <div class="settings-group">
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>AI Mesaj Arka Planı</span>
+                <small>Yapay zeka yanıtlarının arka plan rengi</small>
+              </div>
+              <div class="settings-row-control">
+                <select id="settingsAiBg" class="settings-select">
+                  <option value="default">Varsayılan</option>
+                  <option value="subtle">Hafif Ton</option>
+                  <option value="accent">Vurgu Rengi</option>
+                  <option value="dark">Koyu</option>
+                  <option value="custom">Özel Renk</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-row" id="customAiBgRow" style="display:none;">
+              <div class="settings-row-label"><span>Özel Arka Plan Rengi</span></div>
+              <div class="settings-row-control">
+                <input type="color" id="settingsAiBgCustom" class="settings-color-input" value="#f0f4ff" />
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Mesaj Baloncuk Stili</span>
+                <small>Kullanıcı mesajlarının görünümü</small>
+              </div>
+              <div class="settings-row-control">
+                <select id="settingsMsgStyle" class="settings-select">
+                  <option value="default">Varsayılan</option>
+                  <option value="bubble">Baloncuk</option>
+                  <option value="flat">Düz</option>
+                  <option value="gradient">Gradyan</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Kod Bloğu Teması</span>
+                <small>Kod parçacıklarının renk şeması</small>
+              </div>
+              <div class="settings-row-control">
+                <select id="settingsCodeTheme" class="settings-select">
+                  <option value="dark">Koyu</option>
+                  <option value="light">Açık</option>
+                  <option value="monokai">Monokai</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Mesaj Animasyonu</span>
+                <small>Mesaj giriş animasyonları</small>
+              </div>
+              <div class="settings-row-control">
+                <label class="settings-toggle">
+                  <input type="checkbox" id="settingsMsgAnimation" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Kontrast</span>
+                <small>Metin ve arka plan kontrastı</small>
+              </div>
+              <div class="settings-row-control">
+                <select id="settingsContrast" class="settings-select">
+                  <option value="normal" selected>Normal</option>
+                  <option value="high">Yüksek</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Kişiselleştirme -->
+        <div class="settings-tab-content" id="settingsTabPersonalize">
+          <h2 class="settings-tab-title">Kişiselleştirme</h2>
+          <div class="settings-group">
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Temel üslup ve konuşma tonu</span>
+                <small>AI'ın sana yanıt verirken kullanacağı üslup</small>
+              </div>
+              <div class="settings-row-control">
+                <select id="settingsTone" class="settings-select">
+                  <option value="default">Varsayılan</option>
+                  <option value="friendly">Samimi</option>
+                  <option value="formal">Resmi</option>
+                  <option value="academic">Akademik</option>
+                  <option value="fun">Eğlenceli</option>
+                </select>
+              </div>
+            </div>
+
+            <h3 class="settings-sub-title">Nitelikler</h3>
+            <small class="settings-sub-desc">Temel üslup ve konuşma tonu tercihine ek olarak özelleştirmeler seç.</small>
+
+            <div class="settings-row">
+              <div class="settings-row-label"><span>Samimi</span></div>
+              <div class="settings-row-control">
+                <select id="settingsFriendly" class="settings-select">
+                  <option value="default" selected>Varsayılan</option>
+                  <option value="more">Daha fazla</option>
+                  <option value="less">Daha az</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label"><span>Başlıklar ve Listeler</span></div>
+              <div class="settings-row-control">
+                <select id="settingsHeadings" class="settings-select">
+                  <option value="default" selected>Varsayılan</option>
+                  <option value="more">Daha fazla</option>
+                  <option value="less">Daha az</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label"><span>Emoji</span></div>
+              <div class="settings-row-control">
+                <select id="settingsEmoji" class="settings-select">
+                  <option value="default" selected>Varsayılan</option>
+                  <option value="more">Daha fazla</option>
+                  <option value="less">Daha az</option>
+                  <option value="none">Hiç</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-divider"></div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Hızlı yanıtlar</span>
+                <small>Bazen hızlı, kapsamlı yanıtlar vermek için genel bilgisini kullanabilir.</small>
+              </div>
+              <div class="settings-row-control">
+                <label class="settings-toggle">
+                  <input type="checkbox" id="settingsQuickReplies" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-divider"></div>
+
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Eğitim Seviyesi</span>
+                <small>AI yanıtları bu seviyeye göre uyarlanır</small>
+              </div>
+              <div class="settings-row-control">
+                <select id="settingsLevelSelect" class="settings-select">
+                  <option value="ilkokul">İlkokul</option>
+                  <option value="ortaokul">Ortaokul</option>
+                  <option value="lise" selected>Lise</option>
+                  <option value="universite">Üniversite</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label">
+                <span>Varsayılan Ders</span>
+                <small>Yeni sohbetlerde seçili olacak ders</small>
+              </div>
+              <div class="settings-row-control">
+                <select id="settingsSubjectSelect" class="settings-select">
+                  <option value="matematik">Matematik</option>
+                  <option value="fizik">Fizik</option>
+                  <option value="kimya">Kimya</option>
+                  <option value="biyoloji">Biyoloji</option>
+                  <option value="turkce">Türkçe</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-divider"></div>
+
+            <div class="settings-row settings-row-vertical">
+              <div class="settings-row-label">
+                <span>Özel talimatlar</span>
+                <small>Ek davranış, üslup ve konuşma tonu tercihlerin</small>
+              </div>
+              <textarea id="settingsCustomInstructions" class="settings-textarea" placeholder="Örn: Her zaman formülleri adım adım açıkla, Türkçe özet ver..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Hakkında -->
+        <div class="settings-tab-content" id="settingsTabAbout">
+          <h2 class="settings-tab-title">Hakkında</h2>
+          <div class="settings-group">
+            <div class="settings-about-card">
+              <img src="beareduxaimg.png" alt="BearMate" style="height:48px;object-fit:contain;margin-bottom:12px;" />
+              <h3>BearMate AI</h3>
+              <p>MEB müfredatına uyumlu yapay zeka destekli öğrenme asistanı.</p>
+              <div class="settings-about-meta">
+                <span>Sürüm 2.0</span>
+                <span>© 2026 Bearly</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <!-- Sidebar Overlay (mobil) -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -122,11 +452,11 @@
           </div>
           <div class="setting-group">
             <select id="subjectSelect" class="setting-select">
-              <option value="matematik" selected>📐 Matematik</option>
-              <option value="fizik">⚗️ Fizik</option>
-              <option value="kimya">🧪 Kimya</option>
-              <option value="biyoloji">🌿 Biyoloji</option>
-              <option value="turkce">📝 Türkçe</option>
+              <option value="matematik" selected>Matematik</option>
+              <option value="fizik">Fizik</option>
+              <option value="kimya">Kimya</option>
+              <option value="biyoloji">Biyoloji</option>
+              <option value="turkce">Türkçe</option>
             </select>
           </div>
         </div>
@@ -138,22 +468,22 @@
         <!-- Karşılama Ekranı -->
         <div class="welcome-screen" id="welcomeScreen">
           <div class="welcome-logo">
-            <img src="beareduxaimg.png" alt="BearEdu"
-              style="width:4000px;height:400px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(255, 0, 0, 0.4));animation:logo-pulse 3s ease infinite;" />
+            <img src="beareduxaimg.png" alt="BearMate"
+              style="width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,113,227,0.15));" />
           </div>
-          <h1>BearEdu'ye Hoş Geldin!</h1>
-          <p>Türkiye MEB müfredatına uyumlu yapay zeka asistanın.<br />Herhangi bir soru ya da konu hakkında yardım
+          <h1>BearMate'e Hoş Geldin</h1>
+          <p>MEB müfredatına uyumlu yapay zeka asistanın.<br />Herhangi bir soru ya da konu hakkında yardım
             isteyebilirsin.</p>
           <div class="welcome-suggestions">
-            <button class="welcome-chip" data-msg="Pisagor teoremini açıkla ve örnek ver">📐 Pisagor teoremi
+            <button class="welcome-chip" data-msg="Pisagor teoremini açıkla ve örnek ver">Pisagor teoremi
               nedir?</button>
-            <button class="welcome-chip" data-msg="2x + 5 = 13 denklemini adım adım çöz">🔢 Denklem çözümü
+            <button class="welcome-chip" data-msg="2x + 5 = 13 denklemini adım adım çöz">Denklem çözümü
               göster</button>
-            <button class="welcome-chip" data-msg="Mutlak değer nedir, nasıl hesaplanır?">📊 Mutlak değer anlat</button>
-            <button class="welcome-chip" data-msg="Türev nedir ve nasıl alınır? Örneklerle anlat">∫ Türev
+            <button class="welcome-chip" data-msg="Mutlak değer nedir, nasıl hesaplanır?">Mutlak değer anlat</button>
+            <button class="welcome-chip" data-msg="Türev nedir ve nasıl alınır? Örneklerle anlat">Türev
               nedir?</button>
-            <button class="welcome-chip" data-msg="Işığın kırılması nedir?">💡 Işığın kırılması</button>
-            <button class="welcome-chip" data-msg="Hücre bölünmesi mitoz ve mayoz arasındaki fark nedir?">🌿 Hücre
+            <button class="welcome-chip" data-msg="Işığın kırılması nedir?">Işığın kırılması</button>
+            <button class="welcome-chip" data-msg="Hücre bölünmesi mitoz ve mayoz arasındaki fark nedir?">Hücre
               bölünmesi</button>
           </div>
         </div>
@@ -189,7 +519,7 @@
             </svg>
           </button>
         </div>
-        <p class="input-hint">BearEdu hatalar yapabilir. Önemli bilgileri doğrulayın. 📎 Görsel ekleyebilirsiniz.</p>
+        <p class="input-hint">BearMate hatalar yapabilir. Önemli bilgileri doğrulayın.</p>
       </div>
     </main>
   </div>

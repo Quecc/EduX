@@ -1,11 +1,11 @@
 /* =============================================
-   BearEdu Chat Page — chat.js
+   BearMate Chat Page — chat.js
    Firebase Auth + Firestore + server-side Gemini proxy
    ============================================= */
 
 // ─── Firebase Config (auth.js ile aynı) ─────────────────────────────────────
 const firebaseConfig = {
-  apiKey: "AIzaSyDv-_cjC6Ls5WpN-t3dOL0NrgcQnb14img",
+  apiKey: "YOUR_API_KEY",
   authDomain: "edux-5afd6.firebaseapp.com",
   projectId: "edux-5afd6",
   storageBucket: "edux-5afd6.firebasestorage.app",
@@ -15,7 +15,7 @@ const firebaseConfig = {
 };
 
 
-const GROQ_SYSTEM_PROMPT = `Sen BearEdu AI Assistant - Türkiye MEB müfredatına uyumlu bir öğretmensin.
+const GROQ_SYSTEM_PROMPT = `Sen BearMate AI Assistant - Türkiye MEB müfredatına uyumlu bir öğretmensin.
 Her zaman Türkçe cevap ver. Matematikte adım adım çöz ve formülleri açıkla.
 Kısa ve net ol. Markdown formatı kullan.`;
 
@@ -64,87 +64,10 @@ let isLoading = false;
 let selectedImages = [];  // { file, base64, mimeType }[]
 
 // ─── Knowledge Base ──────────────────────────────────────────────────────────
-const knowledgeBase = {}; // { 'matematik-12': { ders, sinif, konular[] }, ... }
-const KB_FILES = [
-  'data/matematik-12.json',
-  'data/matematik-11.json',
-  'data/kimya-12.json',
-  'data/kimya-11.json',
-  'data/fizik-12.json',
-  'data/fizik-11.json',
-];
+// NOT: Bilgi tabanı araması artık sunucu tarafında RAG (vektör embedding) ile yapılıyor.
+// Client-side KB kodu kaldırıldı — server.js + rag.js bunu otomatik hallediyor.
 
-async function loadKnowledgeBase() {
-  for (const file of KB_FILES) {
-    try {
-      const res = await fetch(file);
-      if (!res.ok) continue;
-      const data = await res.json();
-      const key = `${data.ders.toLowerCase()}-${data.sinif}`;
-      knowledgeBase[key] = data;
-      console.log(`📚 KB yüklendi: ${key} (${data.toplam_konu} konu)`);
-    } catch (e) {
-      // Dosya yoksa sessizce geç
-    }
-  }
-}
 
-function searchKnowledgeBase(query, subject, sinif) {
-  // Hangi kitaplara bakacağımızı belirle
-  const subjectKey = subject || 'matematik';
-  const results = [];
-
-  const queryWords = query.toLowerCase()
-    .replace(/[?!.,;:]/g, '')
-    .split(' ')
-    .filter(w => w.length > 2);
-
-  for (const [key, kb] of Object.entries(knowledgeBase)) {
-    // Ders filtresi
-    if (!key.startsWith(subjectKey)) continue;
-    // Sınıf filtresi (varsa)
-    if (sinif && !key.endsWith(String(sinif))) continue;
-
-    for (const konu of kb.konular) {
-      // Her konuyu skor'la
-      let score = 0;
-      const konuText = (konu.konu + ' ' + konu.bolum + ' ' + konu.icerik).toLowerCase();
-
-      for (const word of queryWords) {
-        if (konuText.includes(word)) score += 2;
-      }
-      // Başlıkta geçiyorsa daha yüksek skor
-      const baslikText = (konu.konu + ' ' + konu.bolum).toLowerCase();
-      for (const word of queryWords) {
-        if (baslikText.includes(word)) score += 3;
-      }
-
-      if (score > 0) {
-        results.push({ score, konu, kb });
-      }
-    }
-  }
-
-  // En ilgili 2 konuyu döndür
-  return results
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 2);
-}
-
-function buildKBContext(query, subject, sinif) {
-  const hits = searchKnowledgeBase(query, subject, sinif);
-  if (hits.length === 0) return '';
-
-  let ctx = '\n\n---\n📖 **DERS KİTABINDAN İLGİLİ BÖLÜMLER (MEB):**\n';
-  for (const { konu, kb } of hits) {
-    ctx += `\n**${kb.ders} ${kb.sinif}. Sınıf — ${konu.bolum} > ${konu.konu}:**\n`;
-    // İçeriği kısalt (max 800 karakter)
-    const excerpt = konu.icerik.slice(0, 800).replace(/\s+/g, ' ').trim();
-    ctx += `${excerpt}\n`;
-  }
-  ctx += '---\n';
-  return ctx;
-}
 
 // ─── DOM Refs ────────────────────────────────────────────────────────────────
 const authLoadingScreen = document.getElementById('authLoadingScreen');
@@ -175,8 +98,25 @@ document.addEventListener('DOMContentLoaded', () => {
   db = firebase.firestore();
   auth.languageCode = 'tr';
 
-  // Knowledge base'i arka planda yükle
-  loadKnowledgeBase();
+  // Tema restore
+  const savedTheme = localStorage.getItem('bearly_theme');
+  const isDark = savedTheme === 'dark' || (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (isDark) document.body.classList.add('dark-mode');
+  updateThemeUI(isDark);
+
+  // Görünüm ayarlarını restore
+  const savedFont = localStorage.getItem('bearly_font_size');
+  if (savedFont) document.body.dataset.fontSize = savedFont;
+  const savedCodeTheme = localStorage.getItem('bearly_code_theme');
+  if (savedCodeTheme) document.body.dataset.codeTheme = savedCodeTheme;
+  const savedMsgStyle = localStorage.getItem('bearly_msg_style');
+  if (savedMsgStyle) document.body.dataset.msgStyle = savedMsgStyle;
+  const savedContrast = localStorage.getItem('bearly_contrast');
+  if (savedContrast) document.body.dataset.contrast = savedContrast;
+  const savedNoAnim = localStorage.getItem('bearly_no_animation');
+  if (savedNoAnim) document.body.dataset.noAnimation = savedNoAnim;
+  // Accent color restore
+  applyAccentColor(localStorage.getItem('bearly_accent') || 'blue');
 
   // Auth state listener
   auth.onAuthStateChanged(async (user) => {
@@ -192,8 +132,89 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
 });
 
+function updateThemeUI(isDark) {
+  // Sidebar logo filter
+  const sidebarLogo = document.querySelector('.sidebar-logo img');
+  if (sidebarLogo) {
+    sidebarLogo.style.filter = isDark ? 'brightness(0) invert(1)' : 'none';
+  }
+}
+
+function applyTheme(mode) {
+  localStorage.setItem('bearly_theme', mode);
+  if (mode === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.body.classList.toggle('dark-mode', prefersDark);
+    updateThemeUI(prefersDark);
+  } else {
+    const isDark = mode === 'dark';
+    document.body.classList.toggle('dark-mode', isDark);
+    updateThemeUI(isDark);
+  }
+}
+
+function applyAccentColor(accent) {
+  const colorMap = { blue:'#0071E3', purple:'#6C63FF', green:'#34C759', orange:'#FF9500', pink:'#FF2D55', teal:'#5AC8FA' };
+  const color = colorMap[accent] || colorMap.blue;
+  document.documentElement.style.setProperty('--primary', color);
+  localStorage.setItem('bearly_accent', accent);
+}
+
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('open');
+  document.getElementById('settingsOverlay').classList.add('open');
+  // Mevcut ayarları yansıt
+  const savedTheme = localStorage.getItem('bearly_theme') || 'light';
+  document.getElementById('settingsThemeSelect').value = savedTheme;
+  const savedFont = localStorage.getItem('bearly_font_size') || 'normal';
+  document.getElementById('settingsFontSize').value = savedFont;
+  if (levelSelect) document.getElementById('settingsLevelSelect').value = levelSelect.value;
+  if (subjectSelect) document.getElementById('settingsSubjectSelect').value = subjectSelect.value;
+
+  // Vurgu rengi
+  const savedAccent = localStorage.getItem('bearly_accent') || 'blue';
+  document.querySelectorAll('.accent-swatch').forEach(s => {
+    s.classList.toggle('active', s.dataset.accent === savedAccent);
+  });
+
+  // Görünüm ayarları
+  const el = (id, key, def) => { const e = document.getElementById(id); if (e) e.value = localStorage.getItem(key) || def; };
+  el('settingsAiBg', 'bearly_ai_bg', 'default');
+  el('settingsMsgStyle', 'bearly_msg_style', 'default');
+  el('settingsCodeTheme', 'bearly_code_theme', 'dark');
+  el('settingsContrast', 'bearly_contrast', 'normal');
+  el('settingsLang', 'bearly_lang', 'tr');
+
+  // Custom AI BG color
+  const aiBgCustom = document.getElementById('settingsAiBgCustom');
+  if (aiBgCustom) aiBgCustom.value = localStorage.getItem('bearly_ai_bg_custom') || '#f0f4ff';
+  const customRow = document.getElementById('customAiBgRow');
+  if (customRow) customRow.style.display = (localStorage.getItem('bearly_ai_bg') === 'custom') ? 'flex' : 'none';
+
+  // Mesaj animasyonu
+  const animEl = document.getElementById('settingsMsgAnimation');
+  if (animEl) animEl.checked = localStorage.getItem('bearly_no_animation') !== 'true';
+
+  // Kişiselleştirme
+  el('settingsTone', 'bearly_tone', 'default');
+  el('settingsFriendly', 'bearly_friendly', 'default');
+  el('settingsHeadings', 'bearly_headings', 'default');
+  el('settingsEmoji', 'bearly_emoji', 'default');
+
+  const quickEl = document.getElementById('settingsQuickReplies');
+  if (quickEl) quickEl.checked = localStorage.getItem('bearly_quick_replies') !== 'false';
+
+  const customInst = document.getElementById('settingsCustomInstructions');
+  if (customInst) customInst.value = localStorage.getItem('bearly_custom_instructions') || '';
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+
 // ─── Auth UI ─────────────────────────────────────────────────────────────────
-function showChatApp(user) {
+async function showChatApp(user) {
   authLoadingScreen.style.display = 'none';
   loginRequiredScreen.style.display = 'none';
   chatApp.style.display = 'flex';
@@ -211,6 +232,29 @@ function showChatApp(user) {
     img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
     sidebarAvatar.innerHTML = '';
     sidebarAvatar.appendChild(img);
+  }
+
+  // Firestore'dan kullanıcı verisini yükle (seviye + profil fotoğrafı)
+  if (db) {
+    try {
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        const data = userDoc.data();
+        // Kullanıcının eğitim seviyesini AI için ayarla
+        if (data.level && levelSelect) {
+          levelSelect.value = data.level;
+        }
+        // Profil fotoğrafını sidebar'a yükle
+        if (data.profilePhoto) {
+          const img = document.createElement('img');
+          img.src = data.profilePhoto;
+          img.alt = name;
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+          sidebarAvatar.innerHTML = '';
+          sidebarAvatar.appendChild(img);
+        }
+      }
+    } catch(e) { /* ignore */ }
   }
 }
 
@@ -238,12 +282,6 @@ function setupEventListeners() {
   // Yeni sohbet
   document.getElementById('newChatBtn').addEventListener('click', startNewChat);
 
-  // Çıkış
-  document.getElementById('sidebarLogoutBtn').addEventListener('click', async () => {
-    await auth.signOut();
-    window.location.href = 'index.html';
-  });
-
   // Sidebar toggle (mobil & masaüstü)
   document.getElementById('sidebarToggleBtn').addEventListener('click', () => {
     if (window.innerWidth <= 768) {
@@ -256,6 +294,158 @@ function setupEventListeners() {
   sidebarOverlay.addEventListener('click', () => {
     sidebar.classList.remove('open');
     sidebarOverlay.classList.remove('active');
+  });
+
+  // ── Popup Menü (ChatGPT tarzı) ───────────────────────────────────────────────
+  const userRow = document.getElementById('sidebarUser');
+  const popupMenu = document.getElementById('userPopupMenu');
+
+  userRow.addEventListener('click', (e) => {
+    e.stopPropagation();
+    popupMenu.classList.toggle('open');
+  });
+
+  // Dışarı tıklayınca kapat
+  document.addEventListener('click', (e) => {
+    if (!popupMenu.contains(e.target) && !userRow.contains(e.target)) {
+      popupMenu.classList.remove('open');
+    }
+  });
+
+  // Ayarlar butonu
+  document.getElementById('openSettingsBtn').addEventListener('click', () => {
+    popupMenu.classList.remove('open');
+    openSettings();
+  });
+
+  // Yardım butonu
+  document.getElementById('popupHelpBtn').addEventListener('click', () => {
+    popupMenu.classList.remove('open');
+    window.open('mailto:destek@bearly.com', '_blank');
+  });
+
+  // Çıkış butonu (popup'tan)
+  document.getElementById('popupLogoutBtn').addEventListener('click', async () => {
+    popupMenu.classList.remove('open');
+    await auth.signOut();
+    window.location.href = 'index.html';
+  });
+
+  // ── Ayarlar Modalı ─────────────────────────────────────────────────────────
+  document.getElementById('settingsCloseBtn').addEventListener('click', closeSettings);
+  document.getElementById('settingsOverlay').addEventListener('click', closeSettings);
+
+  // Tab navigasyonu
+  document.querySelectorAll('[data-settings-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabId = btn.dataset.settingsTab;
+      document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.settings-tab-content').forEach(t => t.classList.remove('active'));
+      const tabMap = { general: 'settingsTabGeneral', appearance: 'settingsTabAppearance', personalize: 'settingsTabPersonalize', about: 'settingsTabAbout' };
+      document.getElementById(tabMap[tabId])?.classList.add('active');
+    });
+  });
+
+  // Tema seçimi
+  document.getElementById('settingsThemeSelect').addEventListener('change', (e) => {
+    applyTheme(e.target.value);
+  });
+
+  // Yazı boyutu
+  document.getElementById('settingsFontSize').addEventListener('change', (e) => {
+    const size = e.target.value;
+    document.body.dataset.fontSize = size;
+    localStorage.setItem('bearly_font_size', size);
+  });
+
+  // Vurgu rengi
+  document.querySelectorAll('.accent-swatch').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      document.querySelectorAll('.accent-swatch').forEach(s => s.classList.remove('active'));
+      swatch.classList.add('active');
+      applyAccentColor(swatch.dataset.accent);
+    });
+  });
+
+  // AI Mesaj Arka Plan
+  document.getElementById('settingsAiBg')?.addEventListener('change', (e) => {
+    localStorage.setItem('bearly_ai_bg', e.target.value);
+    const customRow = document.getElementById('customAiBgRow');
+    if (customRow) customRow.style.display = e.target.value === 'custom' ? 'flex' : 'none';
+  });
+  document.getElementById('settingsAiBgCustom')?.addEventListener('input', (e) => {
+    localStorage.setItem('bearly_ai_bg_custom', e.target.value);
+  });
+
+  // Mesaj Baloncuk Stili
+  document.getElementById('settingsMsgStyle')?.addEventListener('change', (e) => {
+    document.body.dataset.msgStyle = e.target.value;
+    localStorage.setItem('bearly_msg_style', e.target.value);
+  });
+
+  // Kod Bloğu Teması
+  document.getElementById('settingsCodeTheme')?.addEventListener('change', (e) => {
+    document.body.dataset.codeTheme = e.target.value;
+    localStorage.setItem('bearly_code_theme', e.target.value);
+  });
+
+  // Mesaj Animasyonu
+  document.getElementById('settingsMsgAnimation')?.addEventListener('change', (e) => {
+    const noAnim = !e.target.checked;
+    document.body.dataset.noAnimation = noAnim ? 'true' : 'false';
+    localStorage.setItem('bearly_no_animation', noAnim ? 'true' : 'false');
+  });
+
+  // Kontrast
+  document.getElementById('settingsContrast')?.addEventListener('change', (e) => {
+    document.body.dataset.contrast = e.target.value;
+    localStorage.setItem('bearly_contrast', e.target.value);
+  });
+
+  // Konuşma Tonu, Nitelikler
+  ['settingsTone', 'settingsFriendly', 'settingsHeadings', 'settingsEmoji'].forEach(id => {
+    const keyMap = { settingsTone:'bearly_tone', settingsFriendly:'bearly_friendly', settingsHeadings:'bearly_headings', settingsEmoji:'bearly_emoji' };
+    document.getElementById(id)?.addEventListener('change', (e) => {
+      localStorage.setItem(keyMap[id], e.target.value);
+    });
+  });
+
+  // Hızlı Yanıtlar Toggle
+  document.getElementById('settingsQuickReplies')?.addEventListener('change', (e) => {
+    localStorage.setItem('bearly_quick_replies', e.target.checked ? 'true' : 'false');
+  });
+
+  // Özel Talimatlar
+  document.getElementById('settingsCustomInstructions')?.addEventListener('input', (e) => {
+    localStorage.setItem('bearly_custom_instructions', e.target.value);
+  });
+
+  // Tüm sohbetleri sil
+  document.getElementById('clearAllChatsBtn').addEventListener('click', async () => {
+    if (!confirm('Tüm sohbet geçmişini silmek istiyor musun? Bu işlem geri alınamaz.')) return;
+    if (!currentUser || !db) return;
+    try {
+      const snap = await db.collection('users').doc(currentUser.uid).collection('conversations').get();
+      const batch = db.batch();
+      snap.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      conversations = {};
+      currentConvId = null;
+      startNewChat();
+      renderConversationList();
+      closeSettings();
+    } catch(e) { console.error('Sohbet silme hatası:', e); }
+  });
+
+  // Seviye/ders ayarları (senkronize)
+  document.getElementById('settingsLevelSelect').addEventListener('change', (e) => {
+    if (levelSelect) levelSelect.value = e.target.value;
+    localStorage.setItem('bearly_level', e.target.value);
+  });
+  document.getElementById('settingsSubjectSelect').addEventListener('change', (e) => {
+    if (subjectSelect) subjectSelect.value = e.target.value;
+    localStorage.setItem('bearly_subject', e.target.value);
   });
 
   // Welcome chips
@@ -313,6 +503,28 @@ function setupEventListeners() {
     renderImagePreviewStrip();
     updateSendBtn();
   });
+
+  // ── Clipboard Paste (Ctrl+V) ile görsel ekleme ────────────────────────────
+  document.addEventListener('paste', async (e) => {
+    const items = Array.from(e.clipboardData?.items || []);
+    const imageItems = items.filter(item => item.type.startsWith('image/'));
+    if (imageItems.length === 0) return;
+
+    e.preventDefault();
+    const MAX = 5;
+    const MAX_MB = 10;
+
+    for (const item of imageItems.slice(0, MAX - selectedImages.length)) {
+      const file = item.getAsFile();
+      if (!file || file.size > MAX_MB * 1024 * 1024) continue;
+      const base64 = await fileToBase64(file);
+      selectedImages.push({ file, base64, mimeType: file.type || 'image/png' });
+    }
+
+    renderImagePreviewStrip();
+    updateSendBtn();
+    msgInput.focus();
+  });
 }
 
 function updateSendBtn() {
@@ -330,6 +542,29 @@ function fileToBase64(file) {
     reader.onload = () => resolve(reader.result.split(',')[1]); // strip data URL prefix
     reader.onerror = reject;
     reader.readAsDataURL(file);
+  });
+}
+
+// Görseli sıkıştırarak base64 döndür (Firestore 1MB limitine uyum)
+function compressImageBase64(base64, mimeType, maxDim = 800, quality = 0.6) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        const ratio = Math.min(maxDim / w, maxDim / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      resolve(dataUrl.split(',')[1]); // return only base64 part
+    };
+    img.onerror = () => resolve(base64); // fallback: orijinal
+    img.src = `data:${mimeType};base64,${base64}`;
   });
 }
 
@@ -425,11 +660,10 @@ function buildConvItem(conv) {
   el.className = 'conv-item' + (conv.id === currentConvId ? ' active' : '');
   el.dataset.id = conv.id;
 
-  const subjectEmoji = { matematik: '📐', fizik: '⚗️', kimya: '🧪', biyoloji: '🌿', turkce: '📝' };
-  const emoji = subjectEmoji[conv.subject] || '💬';
+  const icon = '<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   el.innerHTML = `
-    <div class="conv-item-icon">${emoji}</div>
+    <div class="conv-item-icon">${icon}</div>
     <div class="conv-item-text">
       <div class="conv-item-title">${escapeHtml(conv.title || 'Yeni Sohbet')}</div>
       <div class="conv-item-date">${formatDate(conv.updatedAt)}</div>
@@ -477,7 +711,7 @@ async function loadConversation(convId) {
   messagesList.innerHTML = '';
 
   (conv.messages || []).forEach(msg => {
-    appendMessage(msg.role, msg.content, false);
+    appendMessage(msg.role, msg.content, false, msg.images || []);
   });
 
   scrollToBottom();
@@ -543,13 +777,50 @@ async function createConversation(firstMsg) {
 }
 
 // ─── Mesaj Kaydet (Firestore) ─────────────────────────────────────────────────
-async function saveMessage(convId, role, content) {
+async function saveMessage(convId, role, content, images = []) {
   const msg = { role, content, timestamp: Date.now() };
-  const convRef = db.collection('users').doc(currentUser.uid).collection('conversations').doc(convId);
-  await convRef.update({
-    messages: firebase.firestore.FieldValue.arrayUnion(msg),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-  });
+
+  // Görselleri sıkıştırarak kaydet (Firestore 1MB belge limiti)
+  if (images.length > 0) {
+    try {
+      const compressed = [];
+      for (const img of images) {
+        // Agresif sıkıştırma: max 400px, %40 kalite
+        const smallBase64 = await compressImageBase64(img.base64, img.mimeType, 400, 0.4);
+        compressed.push({ base64: smallBase64, mimeType: 'image/jpeg' });
+      }
+      msg.images = compressed;
+      console.log(`📸 ${compressed.length} görsel sıkıştırıldı (toplam ~${Math.round(compressed.reduce((s,i) => s + i.base64.length, 0) / 1024)} KB)`);
+    } catch (compErr) {
+      console.error('⚠️ Görsel sıkıştırma hatası:', compErr);
+    }
+  }
+
+  try {
+    const convRef = db.collection('users').doc(currentUser.uid).collection('conversations').doc(convId);
+    await convRef.update({
+      messages: firebase.firestore.FieldValue.arrayUnion(msg),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    console.log(`✅ Mesaj kaydedildi (role: ${role}, images: ${msg.images?.length || 0})`);
+  } catch (saveErr) {
+    console.error('❌ Firestore kaydetme hatası:', saveErr);
+    // Görsel çok büyükse görselsiz kaydetmeyi dene
+    if (msg.images && saveErr.message?.includes('size')) {
+      console.warn('⚠️ Görsel çok büyük, görselsiz kaydediliyor...');
+      delete msg.images;
+      try {
+        const convRef = db.collection('users').doc(currentUser.uid).collection('conversations').doc(convId);
+        await convRef.update({
+          messages: firebase.firestore.FieldValue.arrayUnion(msg),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      } catch (e2) {
+        console.error('❌ Görselsiz kaydetme de başarısız:', e2);
+      }
+    }
+  }
+
   if (conversations[convId]) {
     if (!conversations[convId].messages) conversations[convId].messages = [];
     conversations[convId].messages.push(msg);
@@ -576,7 +847,7 @@ async function sendMessage() {
   sendBtn.classList.remove('active');
   sendBtn.disabled = true;
 
-  const displayText = text || (images.length > 0 ? '📷 Görsel gönderildi' : '');
+  const displayText = text || (images.length > 0 ? 'Görsel gönderildi' : '');
 
   // İlk mesajda sohbet oluştur
   if (!currentConvId) {
@@ -585,6 +856,9 @@ async function sendMessage() {
 
   appendMessage('user', text, true, images);
   isLoading = true;
+
+  // Kullanıcı mesajını HEMEN kaydet (görseller dahil) — API yanıtını bekleme
+  await saveMessage(currentConvId, 'user', displayText, images);
 
   const typingId = showTyping();
 
@@ -595,11 +869,10 @@ async function sendMessage() {
 
     removeTyping(typingId);
     appendMessage('assistant', response, true);
-    await saveMessage(currentConvId, 'user', displayText);
     await saveMessage(currentConvId, 'assistant', response);
   } catch (e) {
     removeTyping(typingId);
-    appendMessage('assistant', `❌ Hata: ${e.message}`, true);
+    appendMessage('assistant', `Hata: ${e.message}`, true);
   } finally {
     isLoading = false;
     msgInput.focus();
@@ -610,11 +883,13 @@ async function sendMessage() {
 // ─── Gemini API ───────────────────────────────────────────────────────────────
 // images: { base64, mimeType }[]
 async function callGeminiAPI(userMessage, history = [], images = []) {
-  // Ders kitabından ilgili bölümleri bul
   const subject = subjectSelect?.value || 'matematik';
-  const kbContext = buildKBContext(userMessage, subject, 12);
+  const level = levelSelect?.value || 'lise';
+  // Seviye → sınıf dönüşümü (RAG filtresi için)
+  const sinifMap = { ilkokul: null, ortaokul: null, lise: null, universite: null };
+  const sinif = sinifMap[level] || null; // null = tüm sınıfları ara
 
-  const systemPrompt = buildPrompt(kbContext);
+  const systemPrompt = buildPrompt();
 
   // Kullanıcının son mesajı: metin + görsel parçaları
   const userParts = [];
@@ -674,6 +949,8 @@ async function callGeminiAPI(userMessage, history = [], images = []) {
       body: JSON.stringify({
         models: MODELS,
         payload,
+        subject,  // RAG filtresi için
+        sinif,    // RAG filtresi için
       }),
     });
   } catch (e) { throw new Error('NETWORK: ' + e.message); }
@@ -695,17 +972,35 @@ async function callGeminiAPI(userMessage, history = [], images = []) {
   return content;
 }
 
-function buildPrompt(kbContext = '') {
+function buildPrompt() {
   const level = levelSelect.value;
   const subject = subjectSelect.value;
   const levelMap = { ilkokul: 'İlkokul (1-4. sınıf)', ortaokul: 'Ortaokul (5-8. sınıf)', lise: 'Lise (9-12. sınıf)', universite: 'Üniversite' };
   const subjectMap = { matematik: 'Matematik', fizik: 'Fizik', kimya: 'Kimya', biyoloji: 'Biyoloji', turkce: 'Türkçe' };
 
-  const kbSection = kbContext
-    ? `\nAŞAĞIDAKİ DERS KİTABI BÖLÜMÜNÜ KULLAN: Cevabını mümkün olduğunda bu bölümdeki anlatım, örnek ve terminolojiyle destekle.${kbContext}`
-    : '';
+  // Personalization settings
+  const tone = localStorage.getItem('bearly_tone') || 'default';
+  const emoji = localStorage.getItem('bearly_emoji') || 'default';
+  const headings = localStorage.getItem('bearly_headings') || 'default';
+  const customInstructions = localStorage.getItem('bearly_custom_instructions') || '';
 
-  return `Sen BearEdu AI, Türkiye MEB müfredatına uyumlu ${levelMap[level] || 'Ortaokul'} düzeyinde ${subjectMap[subject] || 'Matematik'} uzmanı öğretmensin.${kbSection}
+  const toneMap = { friendly: 'Samimi ve arkadaşça bir üslupla konuş, öğrenciye yakın ol.', formal: 'Resmi ve profesyonel bir üslup kullan.', academic: 'Akademik ve bilimsel terminoloji kullan, kaynak belirt.', fun: 'Eğlenceli, enerji dolu ve motive edici bir üslupla konuş.' };
+  const tonePrompt = toneMap[tone] ? `ÜSLUP: ${toneMap[tone]}` : '';
+
+  const emojiMap = { more: 'Yanıtlarında bol emoji kullan 🎉🚀✨', less: 'Yanıtlarında çok az emoji kullan.', none: 'Yanıtlarında hiç emoji KULLANMA.' };
+  const emojiPrompt = emojiMap[emoji] ? `EMOJI: ${emojiMap[emoji]}` : '';
+
+  const headingsMap = { more: 'Daha fazla başlık ve listele kullan, yapıyı netce göster.', less: 'Daha az başlık kullan, daha akıcı yaz.' };
+  const headingsPrompt = headingsMap[headings] ? `FORMAT TERCİHİ: ${headingsMap[headings]}` : '';
+
+  return `Sen BearMate AI, Türkiye MEB müfredatına uyumlu ${levelMap[level] || 'Ortaokul'} düzeyinde ${subjectMap[subject] || 'Matematik'} uzmanı öğretmensin.
+
+ÖNEMLİ: Eğer sistem talimatında "DERS KİTABINDAN İLGİLİ BÖLÜMLER" başlığı altında ders kitabı bölümleri verilmişse, cevabını mümkün olduğunda bu bölümdeki anlatım, örnek ve terminolojiyle destekle. Kitaptaki formül ve örneklere atıf yap.
+
+${tonePrompt}
+${emojiPrompt}
+${headingsPrompt}
+${customInstructions ? 'ÖZEL TALİMATLAR:\n' + customInstructions : ''}
 
 FORMAT:
 - 📌 **Konu**: Sorunun konusu
@@ -748,12 +1043,24 @@ function appendMessage(role, content, animate = true, images = []) {
   row.className = `msg-row ${isAI ? 'ai-row' : 'user-row'}`;
   if (!animate) row.style.animation = 'none';
 
+  // Apply AI background setting
+  if (isAI) {
+    const aiBg = localStorage.getItem('bearly_ai_bg') || 'default';
+    if (aiBg !== 'default') {
+      row.dataset.aiBg = aiBg;
+      if (aiBg === 'custom') {
+        const customColor = localStorage.getItem('bearly_ai_bg_custom') || '#f0f4ff';
+        row.style.background = customColor;
+      }
+    }
+  }
+
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Sen';
   const userInitial = userName.charAt(0).toUpperCase();
 
   const avatarHTML = isAI
-    ? `<div class="msg-avatar ai-avatar" style="background:transparent;border:1.5px solid rgba(108,99,255,0.3);">
-        <img src="beareduxaimg.png" alt="BearEdu" style="width:26px;height:26px;object-fit:contain;" />
+    ? `<div class="msg-avatar ai-avatar" style="background:transparent;border:1.5px solid rgba(0,113,227,0.2);">
+        <img src="beareduxaimg.png" alt="BearMate" style="width:26px;height:26px;object-fit:contain;" />
        </div>`
     : `<div class="msg-avatar user-avatar">${userInitial}</div>`;
 
@@ -770,7 +1077,7 @@ function appendMessage(role, content, animate = true, images = []) {
     <div class="msg-inner">
       ${avatarHTML}
       <div class="msg-content">
-        <div class="msg-name">${isAI ? 'BearEdu AI' : escapeHtml(userName)}</div>
+        <div class="msg-name">${isAI ? 'BearMate AI' : escapeHtml(userName)}</div>
         ${imagesHTML}
         <div class="msg-text">${formattedContent}</div>
         <div class="msg-actions">
@@ -805,11 +1112,11 @@ function showTyping() {
   row.id = id;
   row.innerHTML = `
     <div class="msg-inner">
-      <div class="msg-avatar ai-avatar" style="background:transparent;border:1.5px solid rgba(108,99,255,0.3);">
-        <img src="" alt="BearEdu" style="width:26px;height:26px;object-fit:contain;" />
+      <div class="msg-avatar ai-avatar" style="background:transparent;border:1.5px solid rgba(0,113,227,0.2);">
+        <img src="" alt="BearMate" style="width:26px;height:26px;object-fit:contain;" />
       </div>
       <div class="msg-content">
-        <div class="msg-name">BearEdu AI</div>
+        <div class="msg-name">BearMate AI</div>
         <div class="msg-text">
           <div class="typing-dot"></div>
           <div class="typing-dot"></div>

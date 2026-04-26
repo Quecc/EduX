@@ -4,7 +4,7 @@
   "kaynak": "MEB Ders Kitabı",
   "toplam_sayfa": 266,
   "toplam_konu": 71,
-  "isleme_yontemi": "pdfplumber",
+  "isleme_yontemi": "Surya OCR",
   "konular": [
     {
       "bolum": "Genel",

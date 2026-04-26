@@ -1,11 +1,11 @@
 /**
- * BearEdu AI Engine v2 — Doğal Cevap Veren Kendi Yapay Zekami
+ * BearMate AI Engine v2
  * ===========================================================
  * API key yok. Soru-cevap tabanlı, ChatGPT gibi doğal cevap verir.
  * Soruyu anlayıp direkt cevaplar — şablon değil, bilgi.
  */
 
-const BearEduAI = (() => {
+const BearMateAI = (() => {
 
   // ─────────────────────────────────────────────────────────────
   // NLP ARAÇLARI
@@ -38,7 +38,7 @@ const BearEduAI = (() => {
     // ── SELAMLAMA ───────────────────────────────────────────────
     {
       match: t => has(t,'merhaba','selam','hey','günaydın','iyi günler','hello','hi '),
-      answer: () => `## 👋 Merhaba! Ben BearEdu AI
+      answer: () => `## Merhaba! Ben BearMate AI
 
 Seni Matematik, Geometri, Türev, İntegral ve daha pek çok konuda desteklemek için buradayım!
 

@@ -1,9 +1,9 @@
 /* schedule.css - Task-based planner styles */
 
 .schedule-wrapper {
-  max-width: 1280px;
-  margin: 100px auto 56px auto;
-  padding: 0 20px 40px 20px;
+  max-width: 100%;
+  margin: 100px 0 56px 0;
+  padding: 0 40px 40px 40px;
 }
 
 .planner-booting .schedule-empty,
@@ -21,10 +21,7 @@
   margin-bottom: 20px;
   border-radius: 28px;
   border: 1px solid var(--border2);
-  background:
-    radial-gradient(circle at top left, rgba(108, 99, 255, 0.14), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(62, 207, 207, 0.12), transparent 28%),
-    var(--surface);
+  background: var(--surface);
 }
 
 .planner-booting .planner-initial-loader {
@@ -35,7 +32,7 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  border: 3px solid rgba(108, 99, 255, 0.18);
+  border: 3px solid rgba(0, 113, 227, 0.18);
   border-top-color: var(--primary);
   animation: planner-spin 0.9s linear infinite;
 }
@@ -69,8 +66,8 @@
   gap: 8px;
   padding: 6px 14px;
   border-radius: 999px;
-  background: rgba(108, 99, 255, 0.12);
-  border: 1px solid rgba(108, 99, 255, 0.22);
+  background: var(--bg2);
+  border: 1px solid var(--border);
   color: var(--primary);
   font-size: 0.78rem;
   font-weight: 700;
@@ -110,7 +107,7 @@
   padding: 10px 14px;
   border-radius: 22px;
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(108, 99, 255, 0.04));
+  background: var(--surface);
   box-shadow: var(--shadow);
 }
 
@@ -155,7 +152,7 @@
 }
 
 .ai-analyze-btn {
-  background: linear-gradient(135deg, #1f7a8c, #0b8f70);
+  background: var(--primary);
   color: white;
   border: none;
   padding: 12px 18px;
@@ -166,12 +163,12 @@
   align-items: center;
   gap: 8px;
   transition: var(--trans);
-  box-shadow: 0 10px 28px rgba(11, 143, 112, 0.28);
+  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.15);
 }
 
 .ai-analyze-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(11, 143, 112, 0.35);
+  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.2);
 }
 
 .schedule-empty {
@@ -180,10 +177,7 @@
   align-items: center;
   justify-content: center;
   padding: 72px 20px;
-  background:
-    radial-gradient(circle at top left, rgba(255, 107, 107, 0.12), transparent 34%),
-    radial-gradient(circle at bottom right, rgba(62, 207, 207, 0.12), transparent 30%),
-    var(--surface);
+  background: var(--surface);
   border: 1px dashed var(--border2);
   border-radius: 28px;
   text-align: center;
@@ -279,7 +273,7 @@
   width: 110px;
   height: 110px;
   border-radius: 50%;
-  background: rgba(108, 99, 255, 0.08);
+  background: rgba(0, 113, 227, 0.05);
 }
 
 .summary-label {
@@ -345,7 +339,7 @@
 .coach-note-card {
   border-radius: 18px;
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(108, 99, 255, 0.05));
+  background: var(--surface);
   padding: 16px;
 }
 
@@ -370,8 +364,8 @@
   align-items: center;
   justify-content: center;
   font-size: 0.98rem;
-  background: rgba(108, 99, 255, 0.14);
-  box-shadow: inset 0 0 0 1px rgba(108, 99, 255, 0.14);
+  background: rgba(0, 113, 227, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(0, 113, 227, 0.1);
 }
 
 .coach-motivation p {
@@ -488,7 +482,7 @@
 .carryover-dropzone.drag-over,
 .planner-cell.drag-over {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15);
 }
 
 .empty-pool {
@@ -507,10 +501,10 @@
 }
 
 .planner-board {
-  min-width: 1120px;
+  width: 100%;
   display: grid;
-  grid-template-columns: 128px repeat(7, minmax(200px, 1fr));
-  gap: 14px;
+  grid-template-columns: 140px repeat(7, 1fr);
+  gap: 10px;
 }
 
 .planner-board-head,
@@ -554,12 +548,10 @@
 }
 
 .planner-row-label {
-  min-height: 220px;
+  min-height: 160px;
   padding: 18px;
   border: 1px solid var(--border);
-  background:
-    radial-gradient(circle at top left, rgba(108, 99, 255, 0.13), transparent 42%),
-    var(--surface2);
+  background: var(--surface2);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -590,14 +582,12 @@
 }
 
 .planner-cell {
-  min-height: 220px;
-  height: 288px;
-  min-width: 200px;
+  min-height: 160px;
+  height: auto;
+  min-width: 0;
   padding: 14px;
   border: 1px solid var(--border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(108, 99, 255, 0.04)),
-    var(--surface);
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -607,14 +597,12 @@
 }
 
 .planner-cell:hover {
-  border-color: rgba(108, 99, 255, 0.35);
+  border-color: var(--primary);
 }
 
 .planner-cell.is-empty {
   justify-content: center;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(108, 99, 255, 0.02)),
-    var(--surface);
+  background: var(--surface);
 }
 
 .planner-cell.is-empty .task-list {
@@ -678,8 +666,8 @@
   height: 24px;
   margin-right: 8px;
   border-radius: 50%;
-  border: 1px solid rgba(108, 99, 255, 0.18);
-  background: rgba(108, 99, 255, 0.08);
+  border: 1px solid rgba(0, 113, 227, 0.15);
+  background: rgba(0, 113, 227, 0.06);
   font-size: 1rem;
   font-weight: 800;
 }

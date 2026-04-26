@@ -26,9 +26,9 @@ try:
     from surya.recognition import RecognitionPredictor
     from surya.detection import DetectionPredictor
     surya_available = True
-    print("✅ Surya OCR aktif (v0.17+)")
+    print(" Surya OCR aktif (v0.17+)")
 except ImportError as e:
-    print(f"⚠️  Surya yüklenemedi, pdfplumber kullanılacak: {e}")
+    print(f"  Surya yüklenemedi, pdfplumber kullanılacak: {e}")
     surya_available = False
 
 # ── Metin Temizleme ─────────────────────────────────────────────────────────────
@@ -126,7 +126,7 @@ def extract_with_surya_new(pdf_path):
     from surya.recognition import RecognitionPredictor
     from surya.detection import DetectionPredictor
 
-    print("   🤖 Surya modelleri yükleniyor (ilk seferde yavaş olabilir)...")
+    print("   Surya modelleri yükleniyor (ilk seferde yavaş olabilir)...")
     det_predictor = DetectionPredictor()
     rec_predictor = RecognitionPredictor()
 
@@ -164,7 +164,7 @@ def extract_with_surya_legacy(pdf_path):
     import pypdfium2 as pdfium
     from PIL import Image
 
-    print("   🤖 Surya modelleri yükleniyor...")
+    print("    Surya modelleri yükleniyor...")
     det_model, det_proc = load_det(), load_det_proc()
     rec_model, rec_proc = load_rec(), load_rec_proc()
 
@@ -190,33 +190,33 @@ def extract_pages(pdf_path):
     """En iyi yöntemi seçerek metin çıkar"""
     if surya_available == True:
         try:
-            print("   📡 Surya OCR kullanılıyor...")
+            print("    Surya OCR kullanılıyor...")
             return extract_with_surya_new(pdf_path)
         except Exception as e:
-            print(f"   ⚠️  Surya hatası, pdfplumber'a geçiliyor: {e}")
+            print(f"   Surya hatası, pdfplumber'a geçiliyor: {e}")
     elif surya_available == 'legacy':
         try:
-            print("   📡 Surya OCR (eski) kullanılıyor...")
+            print("   Surya OCR (eski) kullanılıyor...")
             return extract_with_surya_legacy(pdf_path)
         except Exception as e:
-            print(f"   ⚠️  Surya hatası, pdfplumber'a geçiliyor: {e}")
+            print(f"    Surya hatası, pdfplumber'a geçiliyor: {e}")
 
-    print("   📄 pdfplumber kullanılıyor...")
+    print("    pdfplumber kullanılıyor...")
     return extract_with_pdfplumber(pdf_path)
 
 # ── Ana İşleme Fonksiyonu ────────────────────────────────────────────────────────
 
 def process_pdf(pdf_path):
     print(f"\n{'='*55}")
-    print(f"🔍 İşleniyor: {os.path.basename(pdf_path)}")
+    print(f" İşleniyor: {os.path.basename(pdf_path)}")
     print(f"{'='*55}")
 
     if not os.path.exists(pdf_path):
-        print(f"❌ Dosya bulunamadı: {pdf_path}")
+        print(f"Dosya bulunamadı: {pdf_path}")
         return None
 
     ders, sinif = parse_filename(pdf_path)
-    print(f"📚 Ders: {ders} | Sınıf: {sinif}")
+    print(f" Ders: {ders} | Sınıf: {sinif}")
 
     os.makedirs('data', exist_ok=True)
 
@@ -274,7 +274,7 @@ def process_pdf(pdf_path):
 
     # Eğer çok az konu bulunduysa chunk bazlı böl
     if len(konular) < 5:
-        print("⚠️  Az konu tespit edildi, sayfa bazlı bölünüyor...")
+        print("  Az konu tespit edildi, sayfa bazlı bölünüyor...")
         konular = []
         chunk_size = 8
         for start in range(0, total_pages, chunk_size):
@@ -306,10 +306,10 @@ def process_pdf(pdf_path):
         json.dump(output, f, ensure_ascii=False, indent=2)
 
     size_kb = os.path.getsize(output_path) / 1024
-    print(f"\n✅ {os.path.basename(pdf_path)} tamamlandı!")
-    print(f"   📁 Çıktı : {output_path}")
-    print(f"   📊 Konular: {len(konular)}")
-    print(f"   💾 Boyut  : {size_kb:.1f} KB")
+    print(f"\n {os.path.basename(pdf_path)} tamamlandı!")
+    print(f"    Çıktı : {output_path}")
+    print(f"    Konular: {len(konular)}")
+    print(f"    Boyut  : {size_kb:.1f} KB")
     return output_path
 
 # ── Batch İşleme ────────────────────────────────────────────────────────────────
@@ -319,11 +319,11 @@ def process_all():
     pdf_files = glob.glob('pdf-input/*.pdf') + glob.glob('pdf-input/*.PDF')
 
     if not pdf_files:
-        print("❌ pdf-input/ klasöründe PDF bulunamadı.")
+        print(" pdf-input/ klasöründe PDF bulunamadı.")
         print("   PDF dosyalarını pdf-input/ klasörüne koyun ve tekrar çalıştırın.")
         return
 
-    print(f"📦 {len(pdf_files)} PDF bulundu:")
+    print(f" {len(pdf_files)} PDF bulundu:")
     for f in pdf_files:
         print(f"   - {os.path.basename(f)}")
 
@@ -334,7 +334,7 @@ def process_all():
             results.append(result)
 
     print(f"\n{'='*55}")
-    print(f"🎉 Tüm işlemler tamamlandı!")
+    print(f" Tüm işlemler tamamlandı!")
     print(f"   İşlenen: {len(results)}/{len(pdf_files)} PDF")
     print(f"   Çıktılar: data/ klasöründe")
     print(f"{'='*55}")

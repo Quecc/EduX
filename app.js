@@ -1,5 +1,5 @@
 /* =============================================
-   BearEdu - Yapay Zeka Öğrenme Asistanı
+   Bearly - Kişisel Öğrenme Asistanı
    JavaScript uygulama mantığı
    ============================================= */
 
@@ -74,22 +74,36 @@ function setupThemeToggle() {
   const btn = document.getElementById('themeToggle');
   if (!btn) return;
 
+  const sunIcon = '<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const moonIcon = '<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
   // Kayıtlı tercihi uygula
-  const saved = localStorage.getItem('eduai_theme');
-  if (saved === 'light') {
-    document.body.classList.add('light-mode');
-    btn.textContent = '☀️';
+  const saved = localStorage.getItem('bearly_theme');
+  if (saved === 'dark') {
+    document.body.classList.add('dark-mode');
+    btn.innerHTML = sunIcon;
+  } else if (saved === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (prefersDark) { document.body.classList.add('dark-mode'); btn.innerHTML = sunIcon; }
+    else { btn.innerHTML = moonIcon; }
+  } else {
+    btn.innerHTML = moonIcon;
   }
 
   btn.addEventListener('click', () => {
-    const isLight = document.body.classList.toggle('light-mode');
-    btn.textContent = isLight ? '☀️' : '🌙';
-    localStorage.setItem('eduai_theme', isLight ? 'light' : 'dark');
-
-    // Animasyon feedback
-    btn.style.transform = 'rotate(360deg) scale(1.2)';
-    setTimeout(() => btn.style.transform = '', 400);
+    const isDark = document.body.classList.toggle('dark-mode');
+    btn.innerHTML = isDark ? sunIcon : moonIcon;
+    localStorage.setItem('bearly_theme', isDark ? 'dark' : 'light');
   });
+
+  // Accent color restore
+  const accent = localStorage.getItem('bearly_accent') || 'blue';
+  const colorMap = { blue:'#0071E3', purple:'#6C63FF', green:'#34C759', orange:'#FF9500', pink:'#FF2D55', teal:'#5AC8FA' };
+  document.documentElement.style.setProperty('--primary', colorMap[accent] || colorMap.blue);
+
+  // Font size restore
+  const fontSize = localStorage.getItem('bearly_font_size');
+  if (fontSize) document.body.dataset.fontSize = fontSize;
 }
 
 
@@ -156,7 +170,7 @@ function setupClearChat() {
     chatMessages.innerHTML = '';
     state.chatHistory = [];
     quickSuggestions.style.display = 'block';
-    addAiMessage('🔄 Sohbet temizlendi. Yeni bir soru sorabilirsiniz!');
+    addAiMessage('Sohbet temizlendi. Yeni bir soru sorabilirsiniz.');
   });
 }
 
@@ -191,7 +205,7 @@ async function sendMessage() {
     } else if (msg.startsWith('MISSING_SERVER_API_KEY')) {
       errMsg = '⚠️ Sunucuda `GEMINI_API_KEY` tanımlı değil. `.env` dosyasını doldurup sunucuyu yeniden başlatın.';
     } else if (msg.startsWith('RATE_LIMIT')) {
-      addAiMessage('⚠️ Dakika limiti doldu. Lütfen <strong>1 dakika</strong> bekleyip tekrar deneyin. Google ücretsiz API\'sinde dakikada 15 istek sınırı var.');
+      addAiMessage('Dakika limiti doldu. Lütfen <strong>1 dakika</strong> bekleyip tekrar deneyin.');
       startRateCountdown();
     } else if (msg.startsWith('MODEL_NOT_FOUND')) {
       errMsg = '❌ Hiçbir model yanıt vermedi. Lütfen sayfayı manuel olarak yenileyin (F5).';
@@ -308,6 +322,8 @@ async function callGeminiAPI(userMessage) {
       body: JSON.stringify({
         models: MODELS,
         payload,
+        subject: state.subject,  // RAG filtresi için
+        sinif: null,             // tüm sınıfları ara
       }),
     });
   } catch (networkErr) {
@@ -348,13 +364,13 @@ function buildSystemPrompt() {
     kimya: 'Kimya',
   };
 
-  return `Sen BearEdu AI - ${levelMap[state.level] || 'Ortaokul'} düzeyinde ${subjectMap[state.subject] || 'Matematik'} uzmanı öğretmensin.
+  return `Sen BearMate AI - ${levelMap[state.level] || 'Ortaokul'} düzeyinde ${subjectMap[state.subject] || 'Matematik'} uzmanı öğretmensin.
 
 KISA FORMAT:
-- 📌 Konu: Sorunun hangi konuyla ilgili
-- 🔑 Gerekenler: Bilinmesi gerekenler
-- 🧮 Çözüm: Adım adım açıklama
-- ⚡ Pratik: 2 benzer soru
+- Konu: Sorunun hangi konuyla ilgili
+- Gerekenler: Bilinmesi gerekenler
+- Çözüm: Adım adım açıklama
+- Pratik: 2 benzer soru
 
 KURALLAR: Türkçe, net, öğrenci seviyesine uygun. Markdown kullan. ${levelMap[state.level]} - ${subjectMap[state.subject]}`;
 }

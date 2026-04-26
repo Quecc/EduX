@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BearEdu - Çalışma Programı</title>
+  <title>Bearly — Çalışma Programı</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -27,8 +27,8 @@
       <!-- Sol: Logo -->
       <div class="nav-logo">
         <a href="index.html">
-          <img src="beareduxaimg.png" alt="BearEdu"
-            style="height:66px;object-fit:contain;filter:var(--logo-filter);display:block;" />
+          <img src="beareduxaimg.png" alt="Bearly"
+            style="height:48px;object-fit:contain;filter:var(--logo-filter);display:block;" />
         </a>
       </div>
 
@@ -36,7 +36,7 @@
       <div class="nav-right" style="display:flex;align-items:center;gap:16px;">
         <div class="nav-links">
           <a href="index.html" class="nav-link">Ana Sayfa</a>
-          <a href="chat.html" class="nav-link nav-cta" id="startBtn">🚀 Asistanı Başlat</a>
+          <a href="chat.html" class="nav-link nav-cta" id="startBtn">BearMate'e Git</a>
         </div>
         <div id="navAuthButtons" class="nav-auth-buttons">
           <button class="nav-auth-btn" id="navLoginBtn">Giriş Yap</button>
@@ -95,7 +95,9 @@
         </div>
 
         <div style="display:flex;align-items:center;gap:8px;">
-          <button class="theme-toggle" id="themeToggle" title="Koyu/Açık Mod" aria-label="Tema değiştir">🌙</button>
+          <button class="theme-toggle" id="themeToggle" title="Koyu/Açık Mod" aria-label="Tema değiştir">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
           <button class="hamburger" id="hamburger" aria-label="Menü">
             <span></span><span></span><span></span>
           </button>
@@ -111,7 +113,7 @@
   <main class="schedule-wrapper">
     <section class="schedule-hero">
       <div>
-        <span class="schedule-kicker">BearEdu Study OS</span>
+        <span class="schedule-kicker">Bearly Study</span>
         <h1 class="schedule-title">
           Çalışma <span class="gradient-text" style="font-family: var(--font-display);">Sistemin</span>
         </h1>
@@ -150,7 +152,7 @@
     </div>
 
     <div class="schedule-empty" id="scheduleEmpty">
-      <h3>Henüz aktif bir çalışma sistemin yok 👀</h3>
+      <h3>Henüz aktif bir çalışma sistemin yok</h3>
       <p>İster sıfırdan bloklarını kur, ister hazır şablon al, istersen yapay zekaya haftanı kurdur.</p>
       <div class="empty-actions">
         <button class="btn-primary" data-action="create-blank">
@@ -160,7 +162,7 @@
           Şablondan Seç
         </button>
         <button class="btn-secondary" data-action="open-ai">
-          ✨ Yapay Zeka ile Planla
+          Yapay Zeka ile Planla
         </button>
       </div>
     </div>
@@ -173,7 +175,7 @@
         </div>
         <div class="planner-toolbar-actions">
           <button class="btn-secondary" id="btnSelectTemplate">Şablondan Seç</button>
-          <button class="btn-secondary" id="btnAiPlan">✨ Yapay Zeka ile Planla</button>
+          <button class="btn-secondary" id="btnAiPlan">Yapay Zeka ile Planla</button>
         </div>
       </section>
 
@@ -215,7 +217,7 @@
             <h3>Global Konu Senkronizasyonu</h3>
           </div>
           <div class="progress-controls">
-            <p>Tamamlanan görevler BearEdu içindeki ders ilerleme yüzdelerine dönüşür.</p>
+            <p>Tamamlanan görevler Bearly içindeki ders ilerleme yüzdelerine dönüşür.</p>
             <div class="progress-controls-actions">
               <select id="trackPreferenceSelect" aria-label="Alan tercihi">
                 <option value="sayisal">Sayısal</option>
@@ -255,7 +257,7 @@
   <!-- Analyze Result Drawer -->
   <div class="drawer" id="analyzeDrawer">
     <div class="drawer-header">
-      <h3 style="margin:0; font-family:var(--font-display); color:var(--primary);">Haftalık Koç Analizi ✨</h3>
+      <h3 style="margin:0; font-family:var(--font-display); color:var(--primary);">Haftalık Koç Analizi</h3>
       <button class="auth-modal-x" id="closeAnalyzeDrawer">×</button>
     </div>
     <div class="drawer-body" id="analyzeContent" style="font-size:0.9rem; line-height:1.5;">
